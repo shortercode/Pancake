@@ -242,7 +242,6 @@ function lexShortcomment(characters, buffer, position) {
 }
 
 function lexRegex(characters, buffer, position) {
-    let brackets = 0;
     let charset = false;
     let escaped = false;
 
@@ -261,10 +260,6 @@ function lexRegex(characters, buffer, position) {
             if (ch === "]") charset = false;
         } else if (ch === "[")
             charset = true;
-        else if (ch === "(")
-            brackets++;
-        else if (ch === ")")
-            brackets--;
         else if (ch === "/") {
             buffer.push(ch);
             break;
