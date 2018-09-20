@@ -13,7 +13,7 @@ export default function createCharacterStream (str) {
             prev[0] = pos[0];
             prev[1] = pos[1];
 
-            if (ch === NEWLINE) {
+            if (ch === "\n") {
                 pos[0]++;
                 pos[1] = 0;
             } else
