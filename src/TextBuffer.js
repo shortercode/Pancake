@@ -1,3 +1,5 @@
+const { TextDecoder } = require("util");
+
 export default class TextBuffer {
     constructor(pageSize = 2048) {
         this._buffer = new Uint16Array(pageSize);
@@ -42,7 +44,7 @@ export default class TextBuffer {
     }
     consume() {
         if (this._index == 0)
-            return "";
+            throw new Error("nothing to consume");
 
         let subview;
 
