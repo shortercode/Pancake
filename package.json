@@ -1,0 +1,33 @@
+{
+  "name": "pancake",
+  "version": "0.0.1",
+  "description": "A simple parser for modern JS written in modern JS",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests",
+    "build": "rollup src/index.js --file index.js --format cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shortercode/Pancake.git"
+  },
+  "keywords": [
+    "parser",
+    "es6",
+    "es2017",
+    "es2018",
+    "javascript",
+    "js",
+    "node",
+    "browser"
+  ],
+  "author": "Iain Shorter <iainshorter@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shortercode/Pancake/issues"
+  },
+  "homepage": "https://github.com/shortercode/Pancake#readme"
+}
