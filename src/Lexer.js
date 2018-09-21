@@ -41,6 +41,14 @@ function createOperatorList(types) {
     return root;
 }
 
+function isIdentifierStart(ch) {
+    return isLetter(ch);
+}
+
+function isIdentifierCharacter(ch) {
+    return isLetter(ch);
+}
+
 function isLetter(ch) {
     return /^\w$/.test(ch);
 }
@@ -109,7 +117,7 @@ function* lexTemplateliteral(characters, buffer) {
 function lexIdentifier(characters, buffer) {
     const pos = characters.position();
     for (const ch of characters) {
-        if (!isLetter(ch)) {
+        if (!isIdentifierCharacter(ch)) {
             const identifier = buffer.consume();
             characters.back();
             return {
@@ -293,7 +301,7 @@ function* lexer(characters, buffer = new TextBuffer, nested = false) {
 
     for (const ch of characters) {
         let token = null;
-        if (isLetter(ch)) {
+        if (isIdentifierStart(ch)) {
             characters.back();
             token = lexIdentifier(characters, buffer);
         } else if (isNumber(ch)) {
