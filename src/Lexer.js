@@ -90,8 +90,9 @@ function* lexTemplateliteral(characters, buffer) {
             yield* lexer(characters, buffer, true);
 
             position = characters.position();
-            characters.next(); // consume closing brace
+            buffer.push(characters.next()); // consume closing brace
         } else if (ch === TEMP_QUOTE) {
+            buffer.push(ch);
             const string = buffer.consume();
             yield {
                 type: "templateliteral",
