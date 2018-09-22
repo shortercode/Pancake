@@ -1,6 +1,9 @@
+const EOF = "";
+
 export default function createCharacterStream (str) {
     let i = 0;
     const arr = Array.from(str);
+    arr.push(EOF);
     const l = arr.length;
 
     let prev = [0, 0]

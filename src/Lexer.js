@@ -12,6 +12,7 @@ const PERIOD = ".";
 const BACKSLASH = "\\";
 const SLASH = "/";
 const NEWLINE = "\n";
+const EOF = "";
 
 const SYMBOLS = createOperatorList([
     "( ) [ ] { }",
@@ -69,7 +70,7 @@ function isSymbol(ch) {
 }
 
 function isWhitespace(ch) {
-    return /^\s$/.test(ch);
+    return /^\s$/.test(ch) || ch == EOF;
 }
 
 function regexTest(token) {
@@ -92,6 +93,9 @@ function* lexTemplateliteral(characters, buffer) {
     characters.next(); // consume backtick
 
     for (const ch of characters) {
+        if (ch === EOF)
+            throw new Error("Unterminated template literal");
+
         if (ch === DOLLAR && characters.peek() === L_BRACE) {
             characters.next(); // consume opening brace
 
@@ -329,7 +333,7 @@ function* lexer(characters, buffer = new TextBuffer, nested = false) {
             }
         } else if (isSymbol(ch)) {
             characters.back();
-            const regexAllowed = ch === SLASH && regexTest(token);
+            const regexAllowed = ch === SLASH && regexTest(previousToken);
             token = lexSymbol(characters, buffer, regexAllowed);
         } else if (!isWhitespace(ch)) {
             throw new Error(`Unknown character ${ch}`);
