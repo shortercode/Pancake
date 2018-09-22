@@ -1,5 +1,5 @@
 import createCharacterStream from "./createCharacterStream.js";
-import lexer from "./lexer.js";
+import lexer from "./Lexer.js";
 
 export default function parseJavaScript(str) {
     const characters = createCharacterStream(str);
