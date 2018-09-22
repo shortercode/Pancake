@@ -11,11 +11,16 @@
 const parser = require("../");
 
 function test (str) {
-  console.log(str);
-  for (const t of parser(str)) {
-      console.log(t);
+  try {
+    const results = Array.from(parser(str));
+    
+    console.log(`Successfully parsed "${str}"`);
+    console.log(results);
   }
-  console.log("");
+  catch (e) {
+    console.log(`Failed to parse "${str}" "${e.message}"`);
+  }
+  // console.log("");
 }
 
 function testFail (str) {
@@ -28974,7 +28979,7 @@ function testAssert (str) {
     }]
   });
   
-  var tokTypes = acorn.tokTypes;
+  var tokTypes = {};
   
   test('var x = (1 + 2)', {}, {
     locations: true,
