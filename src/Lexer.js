@@ -1,5 +1,6 @@
 import Trie from "./Trie.js";
 import TextBuffer from "./TextBuffer.js";
+import BufferedIterator from "./BuffererIterator.js";
 
 const STAR = "*";
 const QUOTE = "\"";
@@ -306,7 +307,7 @@ function lexRegex(characters, buffer, position) {
     };
 }
 
-function* lexer(characters, buffer = new TextBuffer, nested = false) {
+function* lexer(characters, buffer, nested) {
     const stack = [];
     let previousToken = null;
 
@@ -387,4 +388,7 @@ function* lexer(characters, buffer = new TextBuffer, nested = false) {
     }
 }
 
-export default lexer;
+export default function (characters) {
+    const itr = lexer(characters, new TextBuffer, false);
+    return BufferedIterator(itr);
+};
