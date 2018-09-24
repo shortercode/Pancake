@@ -1,7 +1,43 @@
 import BufferedIterator from "./BuffererIterator";
 
-function parseExpression(tokens) {
+const statementParselets = new Map;
+const infixParselets = new Map;
+const prefixParselets = new Map;
+const infixPrecedence = new Map;
 
+statementParselets.set("var", t => parseVariable("var", t));
+statementParselets.set("let", t => parseVariable("let", t));
+statementParselets.set("const", t => parseVariable("const", t));
+statementParselets.set("class", parseClass);
+statementParselets.set("{", parseBlock);
+
+function getPrecedence(tokens) {
+    const token = tokens.peek();
+    return infixPrecedence.get(token.type);
+}
+
+function parseExpression(tokens, precedence = 0) {
+    const token = tokens.peek();
+    let parselet = prefixParselets.get(token.value); // mostly right, doesn't work for identifiers
+    let left;
+
+    if (parselet)
+        left = parselet(tokens);
+    else
+        throw new Error(`Could not parse "${token.value}".`);
+    
+    // TODO this loop could probably be better
+    while (precedence < getPrecedence(tokens)) {
+        const token = tokens.next().value;
+        const parselet = infixParselets.get(token.value);
+
+        if (parselet)
+            left = parselet(left, tokens);
+        else
+            throw new Error(`Could not parse "${token.value}".`); // maybe consider end of expression instead?
+    }
+
+    return left;
 }
 
 function getName(tokens) {
@@ -48,14 +84,6 @@ function parseVariable(tokens) {
 function parseFunction(tokens) {
 
 }
-
-const statementParselets = new Map;
-
-statementParselets.set("var", t => parseVariable("var", t));
-statementParselets.set("let", t => parseVariable("let", t));
-statementParselets.set("const", t => parseVariable("const", t));
-statementParselets.set("class", parseClass);
-statementParselets.set("{", parseBlock);
 
 function* parse (tokens) {
     for (const token of tokens) {
