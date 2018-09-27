@@ -3,38 +3,91 @@ import BufferedIterator from "./BuffererIterator";
 const statementParselets = new Map;
 const infixParselets = new Map;
 const prefixParselets = new Map;
-const infixPrecedence = new Map;
+const parseletPrecedence = new Map;
 
 statementParselets.set("var", t => parseVariable("var", t));
 statementParselets.set("let", t => parseVariable("let", t));
 statementParselets.set("const", t => parseVariable("const", t));
 statementParselets.set("class", parseClass);
 statementParselets.set("{", parseBlock);
+statementParselets.set("function", parseFunction);
+statementParselets.set("switch", parseSwitch);
+statementParselets.set("import", parseImport);
+statementParselets.set("export", parseExport);
+statementParselets.set("throw", parseThrow);
 
-function getPrecedence(tokens) {
-    const token = tokens.peek();
-    return infixPrecedence.get(token.type);
+function getPrecedence(parselet) {
+    return parseletPrecedence.get(parselet);
+}
+
+function getParselet (tokens, infix) {
+    const next = tokens.peek();
+    const { type, value } = next;
+    const parselets = infix ? infixParselets : prefixParselets;
+
+    if (!infix) {
+        switch (type) {
+            case "identifier": return parseIdentifier;
+            case "regex": return parseRegex;
+            case "number": return parseNumber;
+            case "templateliteral": return parseTemplateLiteral;
+            case "string": return parseString;
+        }
+    }
+
+    if (type == "symbol")
+        return parselets.get(value);
+    if (type == "identifier")
+        return parselets.get(value);
+
+    throw new Error("Unknown token type");
+}
+
+function parseIdentifier () {
+    const name = tokens.next().value;
+    switch (name) {
+        case "function":
+        case "class":
+        case "await":
+        case "this":
+        
+    }
+}
+
+function parseRegex () {
+
+}
+
+function parseString () {
+
+}
+
+function parseTemplateLiteral () {
+
+}
+
+function parseNumber () {
+
 }
 
 function parseExpression(tokens, precedence = 0) {
-    const token = tokens.peek();
-    let parselet = prefixParselets.get(token.value); // mostly right, doesn't work for identifiers
+    let parselet = getParselet(tokens);
     let left;
 
     if (parselet)
         left = parselet(tokens);
     else
-        throw new Error(`Could not parse "${token.value}".`);
+        throw new Error(`Could not parse "${tokens.peek()}".`);
     
-    // TODO this loop could probably be better
-    while (precedence < getPrecedence(tokens)) {
-        const token = tokens.next().value;
-        const parselet = infixParselets.get(token.value);
+    while (true) {
+        const parselet = getParselet(tokens, true);
+        if (precedence >= getPrecedence(parselet))
+            break;
 
         if (parselet)
             left = parselet(left, tokens);
         else
-            throw new Error(`Could not parse "${token.value}".`); // maybe consider end of expression instead?
+            break; // newline and/or semicolon magic needs to happen here
     }
 
     return left;
