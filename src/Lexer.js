@@ -89,6 +89,15 @@ function regexTest(token) {
     return false;
 }
 
+function token (type, position, value, isNewline = false) {
+    return {
+        type,
+        position,
+        value,
+        isNewline
+    };
+}
+
 function* lexTemplateliteral(characters, buffer) {
     let position = characters.position();
     characters.next(); // consume backtick
@@ -101,11 +110,12 @@ function* lexTemplateliteral(characters, buffer) {
             characters.next(); // consume opening brace
 
             const string = buffer.consume();
-            yield {
-                type: "templateliteral",
+
+            yield token(
+                "templateliteral",
                 position,
-                value: string
-            };
+                string
+            );
 
             yield* lexer(characters, buffer, true);
 
@@ -114,11 +124,13 @@ function* lexTemplateliteral(characters, buffer) {
         } else if (ch === TEMP_QUOTE) {
             buffer.push(ch);
             const string = buffer.consume();
-            yield {
-                type: "templateliteral",
+
+            yield token(
+                "templateliteral",
                 position,
-                value: string
-            };
+                string
+            );
+
             return;
         } else {
             buffer.push(ch);
@@ -132,11 +144,13 @@ function lexIdentifier(characters, buffer) {
         if (!isIdentifierCharacter(ch)) {
             const identifier = buffer.consume();
             characters.back();
-            return {
-                type: "identifier",
-                position: pos,
-                value: identifier
-            };
+
+            return token(
+                "identifier",
+                pos,
+                identifier
+            );
+
         } else {
             buffer.push(ch);
         }
@@ -151,11 +165,13 @@ function lexNumber(characters, buffer) {
             break;
         } else if (!isNumber(ch)) {
             const number = buffer.consume();
-            return {
-                type: "number",
-                position: pos,
-                value: number
-            };
+
+            return token(
+                "number",
+                pos,
+                number
+            );
+
         } else {
             buffer.push(ch);
         }
@@ -163,12 +179,13 @@ function lexNumber(characters, buffer) {
 
     for (const ch of characters) {
         if (!isNumber(ch)) {
-            const number = buffer.consume();
-            return {
-                type: "number",
-                position: pos,
-                value: number
-            };
+
+            return token(
+                "number",
+                pos,
+                buffer.consume()
+            );
+
         } else {
             buffer.push(ch);
         }
@@ -192,12 +209,12 @@ function lexString(characters, delimiter, buffer) {
                     buffer.push(ch);
             }
         } else {
-            const string = buffer.consume();
-            return {
-                type: "string",
-                position: pos,
-                value: string
-            };
+ 
+            return token(
+                "string",
+                pos,
+                buffer.consume()
+            );
         }
     }
 }
@@ -229,11 +246,11 @@ function lexSymbol(characters, buffer, regexAllowed) {
 
             characters.back();
 
-            return {
-                type: "symbol",
-                position: pos,
+            return token(
+                "symbol",
+                pos,
                 value
-            };
+            );
         } else
             symbolTrie = next;
     }
@@ -298,17 +315,29 @@ function lexRegex(characters, buffer, position) {
         }
     }
 
-    const statement = buffer.consume();
-
-    return {
-        type: "regex",
+    return token(
+        "regex",
         position,
-        value: statement
-    };
+        buffer.consume()
+    );
+}
+
+function checkNewline(prev, token) {
+    // no previous, first line! so true
+    if (!prev)
+        token.isNewline = true;
+
+    // not on the same line as the previous token
+    else if (prev.position[0] < token.position[0])
+        token.isNewline = true;
+    
+    // return token for streamlining
+    return token;
 }
 
 function* lexer(characters, buffer, nested) {
     const stack = [];
+    let isNewline = false;
     let previousToken = null;
 
     for (const ch of characters) {
@@ -327,11 +356,13 @@ function* lexer(characters, buffer, nested) {
 
             const tokenIterator = lexTemplateliteral(characters, buffer);
 
+            token = previousToken; // borrow token to store previous for next loop
+
             // important that we keep track of the last token
-            for (const t of tokenIterator) {
-                token = t;
-                yield t;
-            }
+            // and the newline status
+            for (const t of tokenIterator)
+                yield token = checkNewline(token, t);
+
         } else if (isSymbol(ch)) {
             characters.back();
             const regexAllowed = ch === SLASH && regexTest(previousToken);
@@ -339,6 +370,15 @@ function* lexer(characters, buffer, nested) {
         } else if (!isWhitespace(ch)) {
             throw new Error(`Unknown character ${ch}`);
         }
+
+        // if we have a token and is newline then attach newline marker
+        if (isNewline && token) {
+            token.isNewline = true;
+            isNewline = false;
+        }
+        // else if newline char set the marker
+        else if (ch === "\n")
+            isNewline = true;
 
         // track bracket stack here, allows extra verification
         // and aids template literals expression lexing
@@ -381,10 +421,8 @@ function* lexer(characters, buffer, nested) {
             }
         }
 
-        previousToken = token;
-
         if (token)
-            yield token;
+            yield previousToken = checkNewline(previousToken, token);
     }
 }
 
