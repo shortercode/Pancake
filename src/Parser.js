@@ -3,7 +3,9 @@ import BufferedIterator from "./BuffererIterator";
 const statementParselets = new Map;
 const infixParselets = new Map;
 const prefixParselets = new Map;
-const parseletPrecedence = new Map;
+const parseletPrecedence = new Map([
+    []
+]);
 
 statementParselets.set("var", t => parseVariable("var", t));
 statementParselets.set("let", t => parseVariable("let", t));
@@ -17,6 +19,7 @@ statementParselets.set("export", parseExport);
 statementParselets.set("throw", parseThrow);
 
 function getPrecedence(parselet) {
+    return 0;
     return parseletPrecedence.get(parselet);
 }
 
@@ -27,7 +30,15 @@ function getParselet (tokens, infix) {
 
     if (!infix) {
         switch (type) {
-            case "identifier": return parseIdentifier;
+            case "identifier":
+                switch (value) {
+                    case "function":
+                        return parseFunction;
+                    case "class":
+                        return parseClass;
+                    default:
+                        return parseIdentifier;
+                }
             case "regex": return parseRegex;
             case "number": return parseNumber;
             case "templateliteral": return parseTemplateLiteral;
@@ -47,11 +58,18 @@ function parseIdentifier () {
     const name = tokens.next().value;
     switch (name) {
         case "function":
+            return parseFunction(tokens);
         case "class":
+            return parseClass(tokens);
         case "await":
+
         case "this":
         
     }
+}
+
+function parsePrefix (type) {
+
 }
 
 function parseRegex () {
