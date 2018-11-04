@@ -7,7 +7,14 @@ function matchSymbol (tokens, symbol) {
     const token = tokens.consume();
 
     if (token.type !== "symbol" || token.value !== symbol)
-        throw new Error(`Expected "${symbol}"`);
+        unexpectedToken(token, symbol);
+}
+
+function unexpectedToken (token, expected) {
+    if (expected)
+        throw new Error(`Expected "${expected}" @ "${token.position}"`);
+    else
+        throw new Error(`Unexpected token "${token.value}" @ "${token.position}"`);
 }
 
 // expression parser
@@ -55,7 +62,7 @@ function parseExpression (tokens, precedence) {
     let parser = getPrefix(tokens);
 
     if (!parser)
-        throw new Error("Could not parse \"" + (tokens.peek().value) + "\".");
+        unexpectedToken(tokens.peek());
 
     let left = parser.parse(tokens);
 
@@ -80,9 +87,39 @@ function parseExpressionStatement (tokens) {
 }
 
 function parseVariableStatement (type, tokens) {
+    const identifier = tokens.consume();
+
+    if (identifier.type != "identifier")
+        unexpectedToken(identifier, "identifier");
+    
+    matchSymbol(tokens, "=");
+
     const expression = parseExpression(tokens, 0);
 
+    endStatement(tokens);
 
+    return {
+        type,
+        identifier,
+        expression
+    };
+}
+
+function parseBlock (tokens) {
+    const statements = [];
+    while (!tokens.done()) {
+        const next = tokens.peek();
+        if (next.type == "symbol" && next.value == "}") {
+            tokens.consume();
+            break;
+        }
+        statements.push(parseStatement(tokens));
+    }
+
+    return {
+        type: "block",
+        statements
+    };
 }
 
 function parseReturnStatement (tokens) {
@@ -124,6 +161,7 @@ function parseStatement (tokens) {
         case "break":
         case "continue":
         case "{":
+            return parseBlock(tokens);
         case "if":
         case "switch":
         case "throw":
