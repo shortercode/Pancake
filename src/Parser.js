@@ -1,6 +1,6 @@
 import BufferedIterator from "./BuffererIterator";
 import { prefixParselets, identifierPrefixParselets } from "./PrefixParselets.js";
-import { infixParselets, identifierInfixParselets } from "./PrefixParselets.js";
+import { infixParselets, identifierInfixParselets } from "./InfixParselets.js";
 
 // util 
 function matchSymbol (tokens, symbol) {
@@ -143,10 +143,8 @@ function parseFlow (type, tokens) {
 
     if (!next) unexpectedEnd();
 
-    let { type, newline, value } = next;
-
-    if (newline == false && type == "identifier")
-        label = value;
+    if (next.newline == false && next.type == "identifier")
+        label = next.value;
     
     endStatement();
 
