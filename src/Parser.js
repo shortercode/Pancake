@@ -2,6 +2,16 @@ import BufferedIterator from "./BuffererIterator";
 import { prefixParselets, identifierPrefixParselets } from "./PrefixParselets.js";
 import { infixParselets, identifierInfixParselets } from "./PrefixParselets.js";
 
+// util 
+function matchSymbol (tokens, symbol) {
+    const token = tokens.consume();
+
+    if (token.type !== "symbol" || token.value !== symbol)
+        throw new Error(`Expected "${symbol}"`);
+}
+
+// expression parser
+
 function getPrecedence(tokens) {
     const parser = getInfix(tokens);
     return parser ? parser.precedence : 0;
@@ -13,7 +23,7 @@ function getInfix(tokens) {
         return null;
 
     if (token.type === "symbol")
-        return infix.get(token.value);
+        return infixParselets.get(token.value);
 
     if (token.type === "identifier") {
         const parselet = identifierInfixParselets.get(token.value);
@@ -21,7 +31,7 @@ function getInfix(tokens) {
             return parselet;
     }
 
-    return infix.get(token.type);
+    return infixParselets.get(token.type);
 }
 
 function getPrefix(tokens) {
@@ -30,7 +40,7 @@ function getPrefix(tokens) {
         return null;
 
     if (token.type === "symbol")
-        return prefix.get(token.value);
+        return prefixParselets.get(token.value);
 
     if (token.type === "identifier") {
         const parselet = identifierPrefixParselets.get(token.value);
@@ -38,7 +48,7 @@ function getPrefix(tokens) {
             return parselet;
     }
 
-    return prefix.get(token.type);
+    return prefixParselets.get(token.type);
 }
 
 function parseExpression (tokens, precedence) {
@@ -57,6 +67,8 @@ function parseExpression (tokens, precedence) {
     return left;
 }
 
+// statement types
+
 function parseExpressionStatement (tokens) {
     const expression = parseExpression(tokens, 0);
     endStatement(tokens);
@@ -65,6 +77,19 @@ function parseExpressionStatement (tokens) {
         type: "expression",
         expression
     };
+}
+
+function parseVariableStatement (type, tokens) {
+    const expression = parseExpression(tokens, 0);
+
+
+}
+
+function parseReturnStatement (tokens) {
+    const statement = parseExpressionStatement(tokens);
+    statement.type = "return";
+
+    return statement;
 }
 
 function endStatement (tokens) {
@@ -84,14 +109,18 @@ function endStatement (tokens) {
     throw new Error("Unexpected token " + token.value);
 }
 
+// main statement block
+
 function parseStatement (tokens) {
     const token = tokens.consume();
 
     switch (token.value) {
         case "let":
         case "const":
-        case "return":
         case "var":
+            return parseVariableStatement(token.value, tokens);
+        case "return":
+            return parseReturnStatement(tokens);
         case "break":
         case "continue":
         case "{":
@@ -118,6 +147,8 @@ function parseStatement (tokens) {
             return parseExpressionStatement(tokens);
     }
 }
+
+// entry points
 
 function* parseProgram (tokens) {
     while (!tokens.done()) {
