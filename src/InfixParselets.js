@@ -30,7 +30,7 @@ class BinaryOperatorParselet extends Parselet {
         const right = parseExpression(tokens, precedence);
 
         return {
-            type: "expression-binary",
+            type: "binary",
             operator,
             left,
             right
@@ -42,7 +42,7 @@ class PostfixOperatorParselet extends Parselet {
     parse (tokens, left) {
         const operator = tokens.consume();
         return {
-            type: "expression-postfix",
+            type: "postfix",
             operator,
             expression: left
         };
@@ -51,7 +51,7 @@ class PostfixOperatorParselet extends Parselet {
 
 class AssignParselet extends Parselet {
     parse (tokens, left) {
-        if (left.type != "expression-name")
+        if (left.type != "identifier")
             throw "HALP";
 
         matchSymbol(tokens, "=");
@@ -59,8 +59,8 @@ class AssignParselet extends Parselet {
         const right = parseExpression(tokens, precedence);
 
         return {
-            type: "expression-assignment",
-            name: left.name,
+            type: "assignment",
+            name: left.value,
             right
         };
     }
@@ -74,7 +74,7 @@ class ConditionalParselet extends Parselet {
         const elseArm = parseExpression(tokens, this.precedence - 1);
 
         return {
-            type: "expression-conditional",
+            type: "conditional",
             condition: left,
             then: thenArm,
             else: elseArm
@@ -95,7 +95,7 @@ class CallParselet extends Parselet {
         }
 
         return {
-            type: "expression-call",
+            type: "call",
             method: left,
             args
         };
@@ -116,17 +116,19 @@ class CallParselet extends Parselet {
     --
 */
 
-register("+", new BinaryOperatorParselet);
-register("-", new BinaryOperatorParselet);
-register("*", new BinaryOperatorParselet);
-register("/", new BinaryOperatorParselet);
-register("**", new BinaryOperatorParselet); // isRight
+register("+", new BinaryOperatorParselet(13));
+register("-", new BinaryOperatorParselet(13));
+register("*", new BinaryOperatorParselet(14));
+register("/", new BinaryOperatorParselet(14));
+register("%", new BinaryOperatorParselet(14));
+register(",", new BinaryOperatorParselet(1));
+register("**", new BinaryOperatorParselet(15, true));
 
-register("=", new AssignParselet);
-register("(", new CallParselet);
-register("?", new ConditionalParselet);
+register("=", new AssignParselet(3));
+register("(", new CallParselet(19));
+register("?", new ConditionalParselet(4));
 
-register("--", new PostfixOperatorParselet);
-register("++", new PostfixOperatorParselet);
+register("--", new PostfixOperatorParselet(17));
+register("++", new PostfixOperatorParselet(17));
 
 export { infixParselets, identifierInfixParselets };
