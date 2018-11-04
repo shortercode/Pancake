@@ -53,7 +53,40 @@ class NameParselet extends Parselet {
 
         return {
             type: "identifier",
-            name
+            value
+        };
+    }
+}
+
+class StringParselet extends Parselet {
+    parse (tokens) {
+        const value = tokens.consume();
+
+        return {
+            type: "string",
+            value
+        };
+    }
+}
+
+class NumberParselet extends Parselet {
+    parse (tokens) {
+        const value = tokens.consume();
+
+        return {
+            type: "number",
+            value
+        };
+    }
+}
+
+class RegexParselet extends Parselet {
+    parse (tokens) {
+        const value = tokens.consume();
+
+        return {
+            type: "regex",
+            value
         };
     }
 }
@@ -89,6 +122,9 @@ register("~", new PrefixOperatorParselet);
 register("...", new PrefixOperatorParselet);
 
 register("identifier", new NameParselet);
+register("number", new NumberParselet);
+register("regex", new RegexParselet);
+register("string", new StringParselet);
 register("(", new GroupParselet);
 registerKeyword("async", new AsyncParselet);
 registerKeyword("import", new ImportParselet);
