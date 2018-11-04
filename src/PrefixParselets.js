@@ -49,44 +49,44 @@ class AsyncParselet extends Parselet {
 
 class NameParselet extends Parselet {
     parse (tokens) {
-        const name = tokens.consume();
+        const token = tokens.consume();
 
         return {
             type: "identifier",
-            value
+            value: token.value
         };
     }
 }
 
 class StringParselet extends Parselet {
     parse (tokens) {
-        const value = tokens.consume();
+        const token = tokens.consume();
 
         return {
             type: "string",
-            value
+            value: token.value
         };
     }
 }
 
 class NumberParselet extends Parselet {
     parse (tokens) {
-        const value = tokens.consume();
+        const token = tokens.consume();
 
         return {
             type: "number",
-            value
+            value: token.value
         };
     }
 }
 
 class RegexParselet extends Parselet {
     parse (tokens) {
-        const value = tokens.consume();
+        const token = tokens.consume();
 
         return {
             type: "regex",
-            value
+            value: token.value
         };
     }
 }
