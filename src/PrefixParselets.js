@@ -125,7 +125,7 @@ register("identifier", new NameParselet);
 register("number", new NumberParselet);
 register("regex", new RegexParselet);
 register("string", new StringParselet);
-register("(", new GroupParselet);
+register("(", new GroupParselet(20));
 registerKeyword("async", new AsyncParselet);
 registerKeyword("import", new ImportParselet);
 registerKeyword("function", new FunctionParselet);
