@@ -59,7 +59,7 @@ function isIdentifierCharacter(ch) {
 }
 
 function isLetter(ch) {
-    return /^\w$/.test(ch);
+    return /^[a-z]$/i.test(ch);
 }
 
 function isNumber(ch) {
