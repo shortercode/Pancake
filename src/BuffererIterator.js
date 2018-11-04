@@ -18,6 +18,12 @@ export default function BufferedIterator (itr) {
 
             return previous;
         },
+        consume () {
+            return this.next().value;
+        },
+        done () {
+            return current.done;
+        },
         back () {
             future = next;
             next = current;
@@ -26,7 +32,7 @@ export default function BufferedIterator (itr) {
             return current;
         },
         previous () {
-            return previous && previous.value;
+            return previous ? previous.value : null ;
         },
         peek () {
             return current.value;
