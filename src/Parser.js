@@ -1,175 +1,133 @@
 import BufferedIterator from "./BuffererIterator";
+import { prefixParselets, identifierPrefixParselets } from "./PrefixParselets.js";
+import { infixParselets, identifierInfixParselets } from "./PrefixParselets.js";
 
-const statementParselets = new Map;
-const infixParselets = new Map;
-const prefixParselets = new Map;
-const parseletPrecedence = new Map([
-    []
-]);
-
-statementParselets.set("var", t => parseVariable("var", t));
-statementParselets.set("let", t => parseVariable("let", t));
-statementParselets.set("const", t => parseVariable("const", t));
-statementParselets.set("class", parseClass);
-statementParselets.set("{", parseBlock);
-statementParselets.set("function", parseFunction);
-statementParselets.set("switch", parseSwitch);
-statementParselets.set("import", parseImport);
-statementParselets.set("export", parseExport);
-statementParselets.set("throw", parseThrow);
-
-function getPrecedence(parselet) {
-    return 0;
-    return parseletPrecedence.get(parselet);
+function getPrecedence(tokens) {
+    const parser = getInfix(tokens);
+    return parser ? parser.precedence : 0;
 }
 
-function getParselet (tokens, infix) {
-    const next = tokens.peek();
-    const { type, value } = next;
-    const parselets = infix ? infixParselets : prefixParselets;
+function getInfix(tokens) {
+    const token = tokens.peek();
+    if (!token)
+        return null;
 
-    if (!infix) {
-        switch (type) {
-            case "identifier":
-                switch (value) {
-                    case "function":
-                        return parseFunction;
-                    case "class":
-                        return parseClass;
-                    default:
-                        return parseIdentifier;
-                }
-            case "regex": return parseRegex;
-            case "number": return parseNumber;
-            case "templateliteral": return parseTemplateLiteral;
-            case "string": return parseString;
-        }
-    }
+    if (token.type === "symbol")
+        return infix.get(token.value);
 
-    if (type == "symbol")
-        return parselets.get(value);
-    if (type == "identifier")
-        return parselets.get(value);
-
-    throw new Error("Unknown token type");
-}
-
-function parseIdentifier () {
-    const name = tokens.next().value;
-    switch (name) {
-        case "function":
-            return parseFunction(tokens);
-        case "class":
-            return parseClass(tokens);
-        case "await":
-
-        case "this":
-        
-    }
-}
-
-function parsePrefix (type) {
-
-}
-
-function parseRegex () {
-
-}
-
-function parseString () {
-
-}
-
-function parseTemplateLiteral () {
-
-}
-
-function parseNumber () {
-
-}
-
-function parseExpression(tokens, precedence = 0) {
-    let parselet = getParselet(tokens);
-    let left;
-
-    if (parselet)
-        left = parselet(tokens);
-    else
-        throw new Error(`Could not parse "${tokens.peek()}".`);
-    
-    while (true) {
-        const parselet = getParselet(tokens, true);
-        if (precedence >= getPrecedence(parselet))
-            break;
-
+    if (token.type === "identifier") {
+        const parselet = identifierInfixParselets.get(token.value);
         if (parselet)
-            left = parselet(left, tokens);
-        else
-            break; // newline and/or semicolon magic needs to happen here
+            return parselet;
+    }
+
+    return infix.get(token.type);
+}
+
+function getPrefix(tokens) {
+    const token = tokens.peek();
+    if (!token)
+        return null;
+
+    if (token.type === "symbol")
+        return prefix.get(token.value);
+
+    if (token.type === "identifier") {
+        const parselet = identifierPrefixParselets.get(token.value);
+        if (parselet)
+            return parselet;
+    }
+
+    return prefix.get(token.type);
+}
+
+function parseExpression (tokens, precedence) {
+    let parser = getPrefix(tokens);
+
+    if (!parser)
+        throw new Error("Could not parse \"" + (tokens.peek().value) + "\".");
+
+    let left = parser.parse(tokens);
+
+    while (precedence < getPrecedence(tokens)) {
+        parser = getInfix(tokens);
+        left = parser.parse(tokens, left);
     }
 
     return left;
 }
 
-function getName(tokens) {
-    const identifier = tokens.next().value;
-    if (!identifier)
-        throw new Error("Unexpected end of input");
-    if (identifier.type != "identifier")
-        throw new Error("Expected identifier");
-    return identifier;
-}
-
-function parseClass(tokens) {
-    
-    const name = getName(tokens);
-    let inherit;
-
-    if (tokens.peek() === "extends") {
-        tokens.next();
-        inherit = parseExpression(tokens);
-    }
-
-    if (tokens.next().value != "{")
-        throw new Error("");
-
-    const body = [];
-
-    for (const token of tokens) {
-
-    }
+function parseExpressionStatement (tokens) {
+    const expression = parseExpression(tokens, 0);
+    endStatement(tokens);
 
     return {
-        type: "class",
-        name: name.value,
-        position: name.position,
-        inherit,
-        body
+        type: "expression",
+        expression
     };
 }
 
-function parseVariable(tokens) {
+function endStatement (tokens) {
+    const token = tokens.consume();
 
+    if (!token) // end of input - thats fine
+        return;
+
+    if (token.type === "symbol" && token.value === ";") // semicolon end - all good
+        return;
+
+    tokens.back();
+    
+    if (token.newline) // for newline detection
+        return;
+
+    throw new Error("Unexpected token " + token.value);
 }
 
-function parseFunction(tokens) {
+function parseStatement (tokens) {
+    const token = tokens.consume();
 
+    switch (token.value) {
+        case "let":
+        case "const":
+        case "return":
+        case "var":
+        case "break":
+        case "continue":
+        case "{":
+        case "if":
+        case "switch":
+        case "throw":
+        case "try":
+        case "function":
+        case "async":
+        case "class":
+        case "do":
+        case "for":
+        case "while":
+        case "debugger":
+        case "import":
+        case "export":
+        case "label":
+        case ";": // empty statement
+        case "with":
+            break;
+
+        default:
+            tokens.back(); // unconsume!
+            return parseExpressionStatement(tokens);
+    }
 }
 
-function* parse (tokens) {
-    for (const token of tokens) {
-        const parselet = token.type === "identifier" && statementParselets.get(token.value);
-
-        if (!parselet) {
-            tokens.back();
-            yield parseExpression(tokens);
-        }
-        else
-            yield parselet(token);
+function* parseProgram (tokens) {
+    while (!tokens.done()) {
+        yield parseStatement(tokens);
     }
 }
 
 export default function (tokens) {
-    const itr = parse(tokens);
+    const itr = parseProgram(tokens);
     return BufferedIterator(itr);
 }
+
+export { parseExpression };
