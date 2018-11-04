@@ -8,7 +8,10 @@
   TODO add more tests and AST checking ( needs parser )
 */
 
-const parser = require("../");
+const pancake = require("../");
+
+const parser = pancake.parse;
+const lexer = pancake.scan;
 
 function test (str) {
   try {
@@ -19,6 +22,8 @@ function test (str) {
   }
   catch (e) {
     console.log(`Failed to parse "${str}" "${e.message}"`);
+    throw e;
+    
   }
   // console.log("");
 }
