@@ -17,6 +17,10 @@ function unexpectedToken (token, expected) {
         throw new Error(`Unexpected token "${token.value}" @ "${token.position}"`);
 }
 
+function unexpectedEnd () {
+    throw new Error("Unexpected end of input");
+}
+
 // expression parser
 
 function getPrecedence(tokens) {
@@ -129,6 +133,29 @@ function parseReturnStatement (tokens) {
     return statement;
 }
 
+function parseEmptyStatement (tokens) {
+    return { type: "empty" };
+}
+
+function parseFlow (type, tokens) {
+    let next = tokens.consume();
+    let label = null;
+
+    if (!next) unexpectedEnd();
+
+    let { type, newline, value } = next;
+
+    if (newline == false && type == "identifier")
+        label = value;
+    
+    endStatement();
+
+    return {
+        type,
+        label
+    };
+}
+
 function endStatement (tokens) {
     const token = tokens.consume();
 
@@ -150,18 +177,22 @@ function endStatement (tokens) {
 
 function parseStatement (tokens) {
     const token = tokens.consume();
+    const { value } = token;
 
-    switch (token.value) {
+    switch (value) {
         case "let":
         case "const":
         case "var":
-            return parseVariableStatement(token.value, tokens);
+            return parseVariableStatement(value, tokens);
         case "return":
             return parseReturnStatement(tokens);
-        case "break":
-        case "continue":
         case "{":
             return parseBlock(tokens);
+        case ";": // empty statement
+            return parseEmptyStatement(tokens);
+        case "break":
+        case "continue":
+            return parseFlow(value, tokens);
         case "if":
         case "switch":
         case "throw":
@@ -176,7 +207,6 @@ function parseStatement (tokens) {
         case "import":
         case "export":
         case "label":
-        case ";": // empty statement
         case "with":
             break;
 
