@@ -1,11 +1,18 @@
 import createCharacterStream from "./createCharacterStream.js";
 import lexer from "./Lexer.js";
+import parser from "./Parser.js";
 
-export default function parseJavaScript(str) {
+export function scan (str) {
     const characters = createCharacterStream(str);
     const tokens = lexer(characters);
-    // TODO write parsing stage
-    // const ast = Parser(tokens);
 
-    return tokens; // iterator
+    return tokens;
+}
+
+export function parse (str) {
+    const characters = createCharacterStream(str);
+    const tokens = lexer(characters);
+    const ast = parser(tokens);
+
+    return ast;
 }
