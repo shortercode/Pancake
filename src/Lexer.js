@@ -164,6 +164,7 @@ function lexNumber(characters, buffer) {
             push(ch);
             break;
         } else if (!isNumber(ch)) {
+            characters.back();
             const number = buffer.consume();
 
             return token(
@@ -254,6 +255,16 @@ function lexSymbol(characters, buffer, regexAllowed) {
         } else
             symbolTrie = next;
     }
+
+    const value = symbolTrie.value;
+    if (!value)
+        throw new Error("Unexpected end of input");
+
+    return token(
+        "symbol",
+        pos,
+        value
+    );
 }
 
 function lexLongcomment(characters, buffer, position) {
