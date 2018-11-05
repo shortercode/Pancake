@@ -94,23 +94,30 @@ class RegexParselet extends Parselet {
 class ArrayParselet extends Parselet {
     parse (tokens) {
         matchSymbol(tokens, "[");
-        const next = tokens.peek();
+        let expressions = [];
 
-        if (!next)
-            throw new Error();
-
-        let expression;
-
-        if (next.type === "symbol" && next.value === "]")
-            expression = null;
-        else
-            expression = parseExpression(tokens, 0); // should be sequence expression
+        for (const { value, type } of tokens) {
+            if (type === "symbol" && value === "]") {
+                tokens.back();
+                break;
+            }
+            else if (type === "symbol" && value === ",")
+                expressions.push(null);
+            else {
+                tokens.back();
+                expressions.push(parseExpression(tokens, 1));
+            }
+        }
 
         matchSymbol(tokens, "]");
 
+        // the same as allowing a comma at the end with no effect
+        if (expressions[expressions.length - 1] === null)
+            expressions.pop();
+
         return {
             type: "array",
-            expression
+            expressions
         };
     }
 }
