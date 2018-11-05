@@ -91,6 +91,34 @@ class RegexParselet extends Parselet {
     }
 }
 
+class ArrayParselet extends Parselet {
+    parse (tokens) {
+        matchSymbol(tokens, "[");
+        const next = tokens.peek();
+
+        if (!next)
+            throw new Error();
+
+        let expression;
+
+        if (next.type === "symbol" && next.value === "]")
+            expression = null;
+        else
+            expression = parseExpression(tokens, 0); // should be sequence expression
+
+        matchSymbol(tokens, "]");
+
+        return {
+            type: "array",
+            expression
+        };
+    }
+}
+
+class ObjectParselet extends Parselet {
+    // going to be more complicated than array unfortunately
+}
+
 class FunctionParselet extends Parselet {
     // pipe back to common function parser?
 }
@@ -125,6 +153,8 @@ register("identifier", new NameParselet);
 register("number", new NumberParselet);
 register("regex", new RegexParselet);
 register("string", new StringParselet);
+register("[", new ArrayParselet);
+register("{", new ObjectParselet);
 register("(", new GroupParselet(20));
 registerKeyword("async", new AsyncParselet);
 registerKeyword("import", new ImportParselet);
