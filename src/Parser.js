@@ -146,7 +146,7 @@ function parseFlow (type, tokens) {
     if (next.newline == false && next.type == "identifier")
         label = next.value;
     
-    endStatement();
+    endStatement(tokens);
 
     return {
         type,
