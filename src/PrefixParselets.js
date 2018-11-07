@@ -1,15 +1,10 @@
 import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser";
+import { match } from "./parserutil.js";
+import { notImplemented } from "./error.js";
 
 const prefixParselets = new Map;
 const identifierPrefixParselets = new Map;
-
-function match (tokens, type, value) {
-    const token = tokens.consume();
-
-    if (token.type !== type || token.value === value)
-        throw new Error(`Expected "${symbol}"`);
-}
 
 function register (symbol, parselet) {
     prefixParselets.set(symbol, parselet);
@@ -93,7 +88,7 @@ class RegexParselet extends Parselet {
 
 class ArrayParselet extends Parselet {
     parse (tokens) {
-        match(tokens, "symbol", "[");
+        match(tokens, "[");
         let expressions = [];
 
         for (const { value, type } of tokens) {
@@ -109,7 +104,7 @@ class ArrayParselet extends Parselet {
             }
         }
 
-        match(tokens, "symbol", "]");
+        match(tokens, "]");
 
         // the same as allowing a comma at the end with no effect
         if (expressions[expressions.length - 1] === null)
@@ -124,8 +119,9 @@ class ArrayParselet extends Parselet {
 
 class ObjectParselet extends Parselet {
     parse (tokens) {
-        match(tokens, "symbol", "{");
-        match(tokens, "symbol", "}");
+        match(tokens, "{");
+        notImplemented();
+        match(tokens, "}");
     }
     // going to be more complicated than array unfortunately
 }
@@ -144,9 +140,9 @@ class ImportParselet extends Parselet {
 
 class GroupParselet extends Parselet {
     parse (tokens) {
-        match(tokens, "symbol", "(");
+        match(tokens, "(");
         const expression = parseExpression(tokens, 0);
-        match(tokens, "symbol", ")");
+        match(tokens, ")");
 
         return expression;
     }
