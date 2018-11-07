@@ -1,23 +1,17 @@
 import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser.js";
+import { match } from "./parserutil.js";
 
 const infixParselets = new Map;
 const identifierInfixParselets = new Map;
-
-function matchSymbol (tokens, symbol) {
-    const token = tokens.consume();
-
-    if (token.type !== "symbol" || token.value !== symbol)
-        throw new Error(`Expected "${symbol}"`);
-}
 
 function register (symbol, parselet) {
     infixParselets.set(symbol, parselet);
 }
 
-function registerKeyword (word, parselet) {
-    identifierInfixParselets.set(word, parselet);
-}
+// function registerKeyword (word, parselet) {
+//     identifierInfixParselets.set(word, parselet);
+// }
 
 class BinaryOperatorParselet extends Parselet {
     constructor (precedence, isRight = false) {
@@ -54,7 +48,7 @@ class AssignParselet extends Parselet {
         if (left.type != "identifier")
             throw "HALP";
 
-        matchSymbol(tokens, "=");
+        match(tokens, "=");
         const precedence = this.precedence - 1;
         const right = parseExpression(tokens, precedence);
 
@@ -68,9 +62,9 @@ class AssignParselet extends Parselet {
 
 class ConditionalParselet extends Parselet {
     parse (tokens, left) {
-        matchSymbol(tokens, "?");
+        match(tokens, "?");
         const thenArm = parseExpression(tokens, 0);
-        matchSymbol(tokens, ":");
+        match(tokens, ":");
         const elseArm = parseExpression(tokens, this.precedence - 1);
 
         return {
@@ -85,7 +79,7 @@ class ConditionalParselet extends Parselet {
 class CallParselet extends Parselet {
     parse (tokens, left) {
         const args = [];
-        matchSymbol(tokens, "(");
+        match(tokens, "(");
 
         if (tokens.peek().value !== ")") {
             do {
@@ -93,6 +87,8 @@ class CallParselet extends Parselet {
             }
             while (tokens.peek().value === ",")
         }
+        
+        match(tokens, ")");
 
         return {
             type: "call",
