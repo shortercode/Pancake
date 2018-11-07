@@ -1,5 +1,7 @@
 import { parseExpression } from "./expressionParser";
 import { ensure, match } from "./parserutil.js";
+import { notImplemented, unexpectedToken } from "./error.js";
+import { parseStatement } from "./Parser.js";
 
 const statementParsers = new Map;
 
@@ -34,7 +36,7 @@ function parseVariableStatement (tokens) {
     const type = getIdentifier(tokens);
     const list = [];
 
-    while (!tokens.done) {
+    while (!tokens.done()) {
 
         const name = getIdentifier(tokens);
         let initialiser = null;
@@ -154,7 +156,7 @@ function parseParameters (tokens) {
     const list = [];
 
     ensure(tokens, "(");
-    while (!tokens.done) {
+    while (!tokens.done()) {
         const exp = parseExpression(tokens, 1);
         list.push(exp);
         if (!match(tokens, ","))
