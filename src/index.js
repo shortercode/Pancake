@@ -1,6 +1,6 @@
-import createCharacterStream from "./createCharacterStream.js";
 import lexer from "./Lexer.js";
-import parser from "./Parser.js";
+import createCharacterStream from "./createCharacterStream.js";
+import { parseProgram } from "./Parser.js";
 
 export function scan (str) {
     const characters = createCharacterStream(str);
@@ -12,7 +12,7 @@ export function scan (str) {
 export function parse (str) {
     const characters = createCharacterStream(str);
     const tokens = lexer(characters);
-    const ast = parser(tokens);
+    const ast = parseProgram(tokens);
 
     return ast;
 }
