@@ -1,5 +1,5 @@
 import Parselet from "./Parselet.js";
-import { parseExpression } from "./Parser.js";
+import { parseExpression } from "./expressionParser.js";
 
 const infixParselets = new Map;
 const identifierInfixParselets = new Map;
