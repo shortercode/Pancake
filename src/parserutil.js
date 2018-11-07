@@ -10,12 +10,12 @@ export function getIdentifier (tokens) {
 }
 
 export function notEnd (tokens) {
-    if (tokens.done)
+    if (tokens.done())
         unexpectedEnd();
 }
 
 export function match (tokens, value, type = "symbol") {
-    if (tokens.done) return false;
+    if (tokens.done()) return false;
     const token = tokens.consume();
 
     if (token.type === type && token.value === value)
