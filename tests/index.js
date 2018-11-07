@@ -8,7 +8,7 @@
   TODO add more tests and AST checking ( needs parser )
 */
 
-const pancake = require("../");
+const pancake = require("../dist/pancake.js");
 
 const parser = pancake.parse;
 const lexer = pancake.scan;
@@ -17,12 +17,12 @@ function test (str) {
   try {
     const results = Array.from(parser(str));
     
-    console.log(`Successfully parsed "${str}"`);
-    console.log(results);
+    // console.log(`Successfully parsed "${str}"`);
+    // console.log(results);
   }
   catch (e) {
     console.log(`Failed to parse "${str}" "${e.message}"`);
-    throw e;
+    // throw e;
     
   }
   // console.log("");
