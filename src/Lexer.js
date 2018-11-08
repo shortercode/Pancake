@@ -30,7 +30,7 @@ const SYMBOLS = createOperatorList([
 ]);
 
 const REGEX_SAFE_SYMBOLS = new Set(
-    "( [ { , ; ... - + ++ -- * ** / % << >> >>> < > <= >= == != === !== & ^ | ! ~ && || ? : = += -= *= /= %= **= <<= >>= >>>= &= ^= |=".split(" ")
+    "{ } (  [ { , ; ... - + ++ -- * ** / % << >> >>> < > <= >= == != === !== & ^ | ! ~ && || ? : = += -= *= /= %= **= <<= >>= >>>= &= ^= |=".split(" ")
 );
 
 function createOperatorList(types) {
@@ -50,7 +50,7 @@ function isLetterExtended(ch) {
 }
 
 function extendedSymbolTest(ch) {
-    return /^[‿_$\u2160-\u2188\u200D\u200C]$/.test(ch);
+    return /^[‿_$\u0336\u2160-\u2188\u200D\u200C]$/.test(ch);
 }
 
 // these tests are not perfect, they will not match emojis (as they are symbols) which are technically valid
