@@ -1,5 +1,5 @@
 import { parseExpression } from "./expressionParser";
-import { ensure, match } from "./parserutil.js";
+import { ensure, match, parseParameters, getIdentifier } from "./parserutil.js";
 import { notImplemented, unexpectedToken } from "./error.js";
 import { parseStatement } from "./Parser.js";
 
@@ -19,7 +19,7 @@ function endStatement (tokens) {
     if (token.newline) // for newline detection
         return;
 
-    unexpectedToken(token, ";");
+    // unexpectedToken(token, ";");
 }
 
 function parseExpressionStatement (tokens) {
@@ -152,21 +152,6 @@ function parseTryStatement (tokens) {
     return statement;
 }
 
-function parseParameters (tokens) {
-    const list = [];
-
-    ensure(tokens, "(");
-    while (!tokens.done()) {
-        const exp = parseExpression(tokens, 1);
-        list.push(exp);
-        if (!match(tokens, ","))
-            break;
-    }
-    ensure(tokens, ")");
-
-    return list;
-}
-
 function parseConditional (tokens) {
     const conditional = {
         condition: null,
@@ -249,4 +234,4 @@ register("export", notImplemented);
 register("label", notImplemented);
 register("with", notImplemented);
 
-export { statementParsers, parseExpressionStatement };
+export { statementParsers, parseExpressionStatement, parseBlock };
