@@ -27,6 +27,9 @@ export default function createCharacterStream (str) {
                 done: i > l
             }
         },
+        consume () {
+            return this.next().value;
+        },
         position() {
             return pos.slice(0);
         },
