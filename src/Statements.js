@@ -38,16 +38,19 @@ function parseVariableStatement (tokens) {
 
     while (!tokens.done()) {
 
-        const name = getIdentifier(tokens);
+        const name = parseExpression(tokens, 4); // higher precedence than assignment
         let initialiser = null;
 
         if (match(tokens, "="))
-            initialiser = parseExpression(tokens, 0);
-        
+            initialiser = parseExpression(tokens, 4);
+
         list.push({
             name,
             initialiser
         });
+
+        if (!match(tokens, ","))
+            break;
     }
 
     endStatement(tokens);
@@ -177,6 +180,7 @@ function parseTryStatement (tokens) {
 
 function parseConditional (tokens) {
     const conditional = {
+        type: "conditional",
         condition: null,
         thenStatement: null,
         elseStatement: null
@@ -216,6 +220,26 @@ function parseForLoop (tokens) {
 
 function parseWhileLoop (tokens) {
 
+    const conditional = {
+        type: "while",
+        condition: null,
+        thenStatement: null
+    };
+
+    ensure(tokens, "while", "identifier");
+    ensure(tokens, "(");
+    conditional.condition = parseExpression(tokens, 0);
+    ensure(tokens, ")");
+
+    if (match(tokens, "{")) {
+        tokens.back();
+        conditional.thenStatement = parseBlock(tokens);
+    }
+    else {
+        conditional.thenStatement = parseExpressionStatement(tokens);
+    }
+
+    return conditional;
 }
 
 
@@ -250,11 +274,10 @@ register("async", notImplemented);
 register("class", notImplemented);
 register("do", notImplemented);
 register("for", notImplemented);
-register("while", notImplemented);
+register("while", parseWhileLoop);
 
 register("import", notImplemented);
 register("export", notImplemented);
-register("label", notImplemented);
 register("with", notImplemented);
 
 export { statementParsers, parseExpressionStatement, parseBlock, parseFunction };
