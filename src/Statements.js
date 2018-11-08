@@ -75,6 +75,29 @@ function parseBlock (tokens) {
     };
 }
 
+function parseFunction (tokens) {
+    ensure(tokens, "function", "identifier");
+
+    const next = tokens.peek();
+    
+    let name;
+
+    if (!next)
+        unexpectedEnd();
+
+    if (next.type === "identifier")
+        name = getIdentifier(tokens);
+
+    const parameters = parseParameters(tokens);
+    const block = parseBlock(tokens);
+
+    return {
+        type: "function",
+        parameters,
+        block
+    };
+}
+
 function parseSimple (tokens, keyword) {
     ensure(tokens, keyword, "identifier");
     const statement = parseExpressionStatement(tokens);
@@ -222,7 +245,7 @@ register("if", parseConditional);
 register("switch", notImplemented);
 
 
-register("function", notImplemented);
+register("function", parseFunction);
 register("async", notImplemented);
 register("class", notImplemented);
 register("do", notImplemented);
@@ -234,4 +257,4 @@ register("export", notImplemented);
 register("label", notImplemented);
 register("with", notImplemented);
 
-export { statementParsers, parseExpressionStatement, parseBlock };
+export { statementParsers, parseExpressionStatement, parseBlock, parseFunction };
