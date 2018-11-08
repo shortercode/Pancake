@@ -198,13 +198,17 @@ function isLetterExtended(ch) {
     return /^[A-Za-zªµºÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮͰ-ʹͶͷͺ-ͽͿΆΈ-ΊΌΎ-ΡΣ-ϵϷ-ҁҊ-ԯԱ-Ֆՙա-ևא-תװ-ײؠ-يٮٯٱ-ۓەۥۦۮۯۺ-ۼۿܐܒ-ܯݍ-ޥޱߊ-ߪߴߵߺࠀ-ࠕࠚࠤࠨࡀ-ࡘࢠ-ࢴࢶ-ࢽऄ-हऽॐक़-ॡॱ-ঀঅ-ঌএঐও-নপ-রলশ-হঽৎড়ঢ়য়-ৡৰৱਅ-ਊਏਐਓ-ਨਪ-ਰਲਲ਼ਵਸ਼ਸਹਖ਼-ੜਫ਼ੲ-ੴઅ-ઍએ-ઑઓ-નપ-રલળવ-હઽૐૠૡૹଅ-ଌଏଐଓ-ନପ-ରଲଳଵ-ହଽଡ଼ଢ଼ୟ-ୡୱஃஅ-ஊஎ-ஐஒ-கஙசஜஞடணதந-பம-ஹௐఅ-ఌఎ-ఐఒ-నప-హఽౘ-ౚౠౡಀಅ-ಌಎ-ಐಒ-ನಪ-ಳವ-ಹಽೞೠೡೱೲഅ-ഌഎ-ഐഒ-ഺഽൎൔ-ൖൟ-ൡൺ-ൿඅ-ඖක-නඳ-රලව-ෆก-ะาำเ-ๆກຂຄງຈຊຍດ-ທນ-ຟມ-ຣລວສຫອ-ະາຳຽເ-ໄໆໜ-ໟༀཀ-ཇཉ-ཬྈ-ྌက-ဪဿၐ-ၕၚ-ၝၡၥၦၮ-ၰၵ-ႁႎႠ-ჅჇჍა-ჺჼ-ቈቊ-ቍቐ-ቖቘቚ-ቝበ-ኈኊ-ኍነ-ኰኲ-ኵኸ-ኾዀዂ-ዅወ-ዖዘ-ጐጒ-ጕጘ-ፚᎀ-ᎏᎠ-Ᏽᏸ-ᏽᐁ-ᙬᙯ-ᙿᚁ-ᚚᚠ-ᛪᛱ-ᛸᜀ-ᜌᜎ-ᜑᜠ-ᜱᝀ-ᝑᝠ-ᝬᝮ-ᝰក-ឳៗៜᠠ-ᡷᢀ-ᢄᢇ-ᢨᢪᢰ-ᣵᤀ-ᤞᥐ-ᥭᥰ-ᥴᦀ-ᦫᦰ-ᧉᨀ-ᨖᨠ-ᩔᪧᬅ-ᬳᭅ-ᭋᮃ-ᮠᮮᮯᮺ-ᯥᰀ-ᰣᱍ-ᱏᱚ-ᱽᲀ-ᲈᳩ-ᳬᳮ-ᳱᳵᳶᴀ-ᶿḀ-ἕἘ-Ἕἠ-ὅὈ-Ὅὐ-ὗὙὛὝὟ-ώᾀ-ᾴᾶ-ᾼιῂ-ῄῆ-ῌῐ-ΐῖ-Ίῠ-Ῥῲ-ῴῶ-ῼⁱⁿₐ-ₜℂℇℊ-ℓℕℙ-ℝℤΩℨK-ℭℯ-ℹℼ-ℿⅅ-ⅉⅎↃↄⰀ-Ⱞⰰ-ⱞⱠ-ⳤⳫ-ⳮⳲⳳⴀ-ⴥⴧⴭⴰ-ⵧⵯⶀ-ⶖⶠ-ⶦⶨ-ⶮⶰ-ⶶⶸ-ⶾⷀ-ⷆⷈ-ⷎⷐ-ⷖⷘ-ⷞⸯ々〆〱-〵〻〼ぁ-ゖゝ-ゟァ-ヺー-ヿㄅ-ㄭㄱ-ㆎㆠ-ㆺㇰ-ㇿ㐀-䶵一-鿕ꀀ-ꒌꓐ-ꓽꔀ-ꘌꘐ-ꘟꘪꘫꙀ-ꙮꙿ-ꚝꚠ-ꛥꜗ-ꜟꜢ-ꞈꞋ-ꞮꞰ-ꞷꟷ-ꠁꠃ-ꠅꠇ-ꠊꠌ-ꠢꡀ-ꡳꢂ-ꢳꣲ-ꣷꣻꣽꤊ-ꤥꤰ-ꥆꥠ-ꥼꦄ-ꦲꧏꧠ-ꧤꧦ-ꧯꧺ-ꧾꨀ-ꨨꩀ-ꩂꩄ-ꩋꩠ-ꩶꩺꩾ-ꪯꪱꪵꪶꪹ-ꪽꫀꫂꫛ-ꫝꫠ-ꫪꫲ-ꫴꬁ-ꬆꬉ-ꬎꬑ-ꬖꬠ-ꬦꬨ-ꬮꬰ-ꭚꭜ-ꭥꭰ-ꯢ가-힣ힰ-ퟆퟋ-ퟻ豈-舘並-龎ﬀ-ﬆﬓ-ﬗיִײַ-ﬨשׁ-זּטּ-לּמּנּסּףּפּצּ-ﮱﯓ-ﴽﵐ-ﶏﶒ-ﷇﷰ-ﷻﹰ-ﹴﹶ-ﻼＡ-Ｚａ-ｚｦ-ﾾￂ-ￇￊ-ￏￒ-ￗￚ-ￜ]$/.test(ch);
 }
 
+function extendedSymbolTest(ch) {
+    return /^[‿_$\u2160-\u2188\u200D\u200C]$/.test(ch);
+}
+
 // these tests are not perfect, they will not match emojis (as they are symbols) which are technically valid
 function isIdentifierStart(ch) {
-    return isLetter(ch) || ch == "_" || ch == "$" || isLetterExtended(ch);
+    return isLetter(ch) || extendedSymbolTest(ch) || isLetterExtended(ch);
 }
 
 function isIdentifierCharacter(ch) {
-    return isLetter(ch) || ch == "_" || ch == "$" || isNumber(ch) || isLetterExtended(ch);
+    return isLetter(ch) || extendedSymbolTest(ch) || isNumber(ch) || isLetterExtended(ch);
 }
 
 function isLetter(ch) {
@@ -310,7 +314,7 @@ function lexNumber(characters, buffer) {
     const pos = characters.position();
     for (const ch of characters) {
         if (ch == PERIOD) {
-            push(ch);
+            buffer.push(ch);
             break;
         } else if (!isNumber(ch)) {
             characters.back();
@@ -528,7 +532,7 @@ function* lexer(characters, buffer, nested) {
             const regexAllowed = ch === SLASH && regexTest(previousToken);
             token = lexSymbol(characters, buffer, regexAllowed);
         } else if (!isWhitespace(ch)) {
-            throw new Error(`Unknown character ${ch}`);
+            throw new Error(`Unknown character ${ch.charCodeAt(0)}`);
         }
 
         // if we have a token and is newline then attach newline marker
@@ -664,6 +668,15 @@ function unexpectedEnd$1 () {
     throw new Error("Unexpected end of input");
 }
 
+function getIdentifier (tokens) {
+    notEnd(tokens);
+    const token = tokens.consume();
+    if (token.type !== "identifier")
+        unexpectedToken(token, "identifier");
+    
+    return token.value;
+}
+
 function notEnd (tokens) {
     if (tokens.done())
         unexpectedEnd$1();
@@ -684,6 +697,27 @@ function ensure (tokens, value, type = "symbol") {
     const token = tokens.consume();
     if (token.type !== type || token.value !== value)
         unexpectedToken(token, value);
+}
+
+function parseParameters (tokens) {
+    const list = [];
+
+    ensure(tokens, "(");
+    while (!tokens.done()) {
+        if (match(tokens, ")"))
+            break;
+            
+        const exp = parseExpression(tokens, 1);
+        list.push(exp);
+
+        if (match(tokens, ")"))
+            break;
+
+        if (!match(tokens, ","))
+            unexpectedToken(tokens.peek(), ",");
+    }
+
+    return list;
 }
 
 const prefixParselets = new Map;
@@ -805,7 +839,7 @@ class ObjectParselet extends Parselet {
         ensure(tokens, "{");
         let properties = [];
 
-        for (const token of tokens) {
+        for (let token of tokens) {
             let { type, value } = token;
 
             const prop = {
@@ -815,26 +849,27 @@ class ObjectParselet extends Parselet {
             };
 
             if (type === "symbol" && value === "}") {
+                tokens.back();
                 break; // no content, early exit
             }
-            else if (type === "identifier") {
-                if (value === "get" || value === "set" || value === "async") {
-                    const next = tokens.peek();
-                    if (next.type === "identifier") {
-                        tokens.consume();
-                        prop.prefix = value;
-                        value = next.value;
-                    }
+            
+            if (type === "identifier" && (value === "get" || value === "set" || value === "async")) {
+                if (!(match(tokens, ":") || match(tokens, "("))) {
+                    token = tokens.consume();
+                    prop.prefix = value;
+                    value = token.value;
+                    type = token.type;
                 }
-                prop.name = value;
+                else
+                    tokens.back(); // unconsume above match!
             }
-            else if (type === "string") {
+            
+            if (type === "string" || type === "number" || type === "identifier") {
                 prop.name = value;
             }
             else if (type === "symbol" && value === "[") {
                 prop.name = parseExpression(tokens, 0);
                 ensure(tokens, "]");
-                expressions.push(null);
             }
             else
                 unexpectedToken(token);
@@ -842,8 +877,8 @@ class ObjectParselet extends Parselet {
             properties.push(prop);
 
             if (match(tokens, "(")) {
+                tokens.back();
                 const params = parseParameters(tokens);
-                ensure(tokens, ")");
                 const body = parseBlock(tokens);
                 prop.value = {
                     type: "function",
@@ -852,12 +887,13 @@ class ObjectParselet extends Parselet {
                 };
             }
             else if (match(tokens, ":")) {
-                const body = parseExpression(tokens, 0);
+                const body = parseExpression(tokens, 1);
                 prop.value = body;
             }
             
             
             if (match(tokens, "}")) {
+                tokens.back();
                 break;
             }
             else if (!match(tokens, ","))
@@ -932,9 +968,9 @@ function register$1 (symbol, parselet) {
     infixParselets.set(symbol, parselet);
 }
 
-// function registerKeyword (word, parselet) {
-//     identifierInfixParselets.set(word, parselet);
-// }
+function registerKeyword$1 (word, parselet) {
+    identifierInfixParselets.set(word, parselet);
+}
 
 class BinaryOperatorParselet extends Parselet {
     constructor (precedence, isRight = false) {
@@ -957,37 +993,19 @@ class BinaryOperatorParselet extends Parselet {
 
 class PostfixOperatorParselet extends Parselet {
     parse (tokens, left) {
-        const operator = tokens.consume();
         return {
             type: "postfix",
-            operator,
+            operator: tokens.consume(),
             expression: left
-        };
-    }
-}
-
-class AssignParselet extends Parselet {
-    parse (tokens, left) {
-        if (left.type != "identifier")
-            throw "HALP";
-
-        match(tokens, "=");
-        const precedence = this.precedence - 1;
-        const right = parseExpression(tokens, precedence);
-
-        return {
-            type: "assignment",
-            name: left.value,
-            right
         };
     }
 }
 
 class ConditionalParselet extends Parselet {
     parse (tokens, left) {
-        match(tokens, "?");
+        ensure(tokens, "?");
         const thenArm = parseExpression(tokens, 0);
-        match(tokens, ":");
+        ensure(tokens, ":");
         const elseArm = parseExpression(tokens, this.precedence - 1);
 
         return {
@@ -1001,54 +1019,111 @@ class ConditionalParselet extends Parselet {
 
 class CallParselet extends Parselet {
     parse (tokens, left) {
-        const args = [];
-        match(tokens, "(");
-
-        if (tokens.peek().value !== ")") {
-            do {
-                args.push(parseExpression(tokens, 0));
-            }
-            while (tokens.peek().value === ",")
-        }
-        
-        match(tokens, ")");
+        const parameters = parseParameters(tokens);
 
         return {
             type: "call",
             method: left,
-            args
+            parameters
         };
     }
 }
 
-/*
-    +
-    -
-    *
-    /
-    **
+class MemberParselet extends Parselet {
+    parse(tokens, left) {
+        ensure(tokens, ".");
 
-    =
+        const right = parseExpression(tokens, this.precedence);
 
-    !
-    ++
-    --
-*/
+        return {
+            type: "member",
+            left,
+            right
+        };
+    }
+}
+
+class ComputerMemberParselet extends Parselet {
+    parse(tokens, left) {
+        ensure(tokens, "[");
+
+        const right = parseExpression(tokens, 0);
+
+        ensure(tokens, "]");
+
+        return {
+            type: "computermember",
+            left,
+            right
+        };
+    }
+}
+
+register$1(",", new BinaryOperatorParselet(1));
+
+// 2 - yield & yield* ( unary )
+
+register$1("=", new BinaryOperatorParselet(3, true));
+register$1("+=", new BinaryOperatorParselet(3, true));
+register$1("-=", new BinaryOperatorParselet(3, true));
+register$1("*=", new BinaryOperatorParselet(3, true));
+register$1("/=", new BinaryOperatorParselet(3, true));
+register$1("%=", new BinaryOperatorParselet(3, true));
+register$1("**=", new BinaryOperatorParselet(3, true));
+register$1("<<=", new BinaryOperatorParselet(3, true));
+register$1(">>=", new BinaryOperatorParselet(3, true));
+register$1(">>>=", new BinaryOperatorParselet(3, true));
+register$1("&=", new BinaryOperatorParselet(3, true));
+register$1("^=", new BinaryOperatorParselet(3, true));
+register$1("|=", new BinaryOperatorParselet(3, true));
+
+register$1("?", new ConditionalParselet(4));
+
+register$1("||", new BinaryOperatorParselet(5));
+
+register$1("&&", new BinaryOperatorParselet(6));
+
+register$1("|", new BinaryOperatorParselet(7));
+
+register$1("^", new BinaryOperatorParselet(8));
+
+register$1("&", new BinaryOperatorParselet(9));
+
+register$1("!==", new BinaryOperatorParselet(10));
+register$1("!=", new BinaryOperatorParselet(10));
+register$1("==", new BinaryOperatorParselet(10));
+register$1("===", new BinaryOperatorParselet(10));
+
+register$1("<", new BinaryOperatorParselet(11));
+register$1("<=", new BinaryOperatorParselet(11));
+register$1(">", new BinaryOperatorParselet(11));
+register$1(">=", new BinaryOperatorParselet(11));
+registerKeyword$1("in", new BinaryOperatorParselet(11));
+registerKeyword$1("instanceof", new BinaryOperatorParselet(11));
+
+register$1("<<", new BinaryOperatorParselet(12));
+register$1(">>", new BinaryOperatorParselet(12));
+register$1(">>>", new BinaryOperatorParselet(12));
 
 register$1("+", new BinaryOperatorParselet(13));
 register$1("-", new BinaryOperatorParselet(13));
+
 register$1("*", new BinaryOperatorParselet(14));
 register$1("/", new BinaryOperatorParselet(14));
 register$1("%", new BinaryOperatorParselet(14));
-register$1(",", new BinaryOperatorParselet(1));
+
 register$1("**", new BinaryOperatorParselet(15, true));
 
-register$1("=", new AssignParselet(3));
-register$1("(", new CallParselet(19));
-register$1("?", new ConditionalParselet(4));
+// 16 - lots of unary
 
 register$1("--", new PostfixOperatorParselet(17));
 register$1("++", new PostfixOperatorParselet(17));
+
+// 18 - new without argument list ( prefix )
+
+register$1("(", new CallParselet(19));
+register$1(".", new MemberParselet(19));
+register$1("[", new ComputerMemberParselet(19));
 
 function getPrecedence(tokens) {
     const parser = getInfix(tokens);
@@ -1121,7 +1196,7 @@ function endStatement (tokens) {
     if (token.newline) // for newline detection
         return;
 
-    unexpectedToken(token, ";");
+    // unexpectedToken(token, ";");
 }
 
 function parseExpressionStatement (tokens) {
@@ -1160,7 +1235,7 @@ function parseVariableStatement (tokens) {
     };
 }
 
-function parseBlock$1 (tokens) {
+function parseBlock (tokens) {
     const statements = [];
 
     ensure(tokens, "{");
@@ -1233,18 +1308,18 @@ function parseTryStatement (tokens) {
         finally: null
     };
 
-    statement.try = parseBlock$1(tokens);
+    statement.try = parseBlock(tokens);
 
     let hasFailureBlock = false;
 
     if (match(tokens, "catch", "identifier")) {
-        statement.params = parseParameters$1(tokens);
-        statement.catch = parseBlock$1(tokens);
+        statement.params = parseParameters(tokens);
+        statement.catch = parseBlock(tokens);
         hasFailureBlock = true;
     }
 
     if (match(tokens, "finally", "identifier")) {
-        statement.finally = parseBlock$1(tokens);
+        statement.finally = parseBlock(tokens);
         hasFailureBlock = true;
     }
 
@@ -1252,21 +1327,6 @@ function parseTryStatement (tokens) {
         unexpectedToken(tokens.peek(), "catch or finally after try");
 
     return statement;
-}
-
-function parseParameters$1 (tokens) {
-    const list = [];
-
-    ensure(tokens, "(");
-    while (!tokens.done()) {
-        const exp = parseExpression(tokens, 1);
-        list.push(exp);
-        if (!match(tokens, ","))
-            break;
-    }
-    ensure(tokens, ")");
-
-    return list;
 }
 
 function parseConditional (tokens) {
@@ -1282,7 +1342,7 @@ function parseConditional (tokens) {
 
     if (match(tokens, "{")) {
         tokens.back();
-        conditional.thenStatement = parseBlock$1(tokens);
+        conditional.thenStatement = parseBlock(tokens);
     }
     else
         conditional.thenStatement = parseExpressionStatement(tokens);
@@ -1294,7 +1354,7 @@ function parseConditional (tokens) {
         }
         else if (match(tokens, "{")) {
             tokens.back();
-            conditional.elseStatement = parseBlock$1(tokens);
+            conditional.elseStatement = parseBlock(tokens);
         }
         else {
             conditional.elseStatement = parseExpressionStatement(tokens);
@@ -1321,7 +1381,7 @@ register$2("return", parseReturnStatement);
 register$2("throw", parseThrowStatement);
 register$2("debugger", parseDebuggerStatement);
 
-register$2("{", parseBlock$1);
+register$2("{", parseBlock);
 register$2(";", parseEmptyStatement);
 
 register$2("try", parseTryStatement);
