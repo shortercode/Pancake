@@ -1,7 +1,7 @@
 import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser";
-import { match } from "./parserutil.js";
-import { notImplemented } from "./error.js";
+import { match, ensure } from "./parserutil.js";
+import { notImplemented, unexpectedToken } from "./error.js";
 
 const prefixParselets = new Map;
 const identifierPrefixParselets = new Map;
@@ -119,11 +119,75 @@ class ArrayParselet extends Parselet {
 
 class ObjectParselet extends Parselet {
     parse (tokens) {
-        match(tokens, "{");
-        notImplemented();
-        match(tokens, "}");
+        ensure(tokens, "{");
+        let properties = [];
+
+        for (const token of tokens) {
+            let { type, value } = token;
+
+            const prop = {
+                name: null, 
+                prefix: null,
+                value: null
+            };
+
+            if (type === "symbol" && value === "}") {
+                break; // no content, early exit
+            }
+            else if (type === "identifier") {
+                if (value === "get" || value === "set" || value === "async") {
+                    const next = tokens.peek();
+                    if (next.type === "identifier") {
+                        tokens.consume();
+                        prop.prefix = value;
+                        value = next.value;
+                    }
+                }
+                prop.name = value;
+            }
+            else if (type === "string") {
+                prop.name = value;
+            }
+            else if (type === "symbol" && value === "[") {
+                prop.name = parseExpression(tokens, 0);
+                ensure(tokens, "]");
+                expressions.push(null);
+            }
+            else
+                unexpectedToken(token);
+
+            properties.push(prop);
+
+            if (match(tokens, "(")) {
+                const params = parseParameters(tokens);
+                ensure(tokens, ")");
+                const body = parseBlock(tokens);
+                prop.value = {
+                    type: "function",
+                    params,
+                    body
+                };
+            }
+            else if (match(tokens, ":")) {
+                const body = parseExpression(tokens, 0);
+                prop.value = body;
+            }
+            
+            
+            if (match(tokens, "}")) {
+                break;
+            }
+            else if (!match(tokens, ","))
+                unexpectedToken(tokens.peek());   
+        }
+
+        ensure(tokens, "}");
+
+        return {
+            type: "object",
+            properties
+        };
     }
-    // going to be more complicated than array unfortunately
 }
 
 class FunctionParselet extends Parselet {

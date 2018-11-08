@@ -808,11 +808,75 @@ class ArrayParselet extends Parselet {
 
 class ObjectParselet extends Parselet {
     parse (tokens) {
-        match(tokens, "{");
-        notImplemented();
-        match(tokens, "}");
+        ensure(tokens, "{");
+        let properties = [];
+
+        for (const token of tokens) {
+            let { type, value } = token;
+
+            const prop = {
+                name: null, 
+                prefix: null,
+                value: null
+            };
+
+            if (type === "symbol" && value === "}") {
+                break; // no content, early exit
+            }
+            else if (type === "identifier") {
+                if (value === "get" || value === "set" || value === "async") {
+                    const next = tokens.peek();
+                    if (next.type === "identifier") {
+                        tokens.consume();
+                        prop.prefix = value;
+                        value = next.value;
+                    }
+                }
+                prop.name = value;
+            }
+            else if (type === "string") {
+                prop.name = value;
+            }
+            else if (type === "symbol" && value === "[") {
+                prop.name = parseExpression(tokens, 0);
+                ensure(tokens, "]");
+                expressions.push(null);
+            }
+            else
+                unexpectedToken(token);
+
+            properties.push(prop);
+
+            if (match(tokens, "(")) {
+                const params = parseParameters(tokens);
+                ensure(tokens, ")");
+                const body = parseBlock(tokens);
+                prop.value = {
+                    type: "function",
+                    params,
+                    body
+                };
+            }
+            else if (match(tokens, ":")) {
+                const body = parseExpression(tokens, 0);
+                prop.value = body;
+            }
+            
+            
+            if (match(tokens, "}")) {
+                break;
+            }
+            else if (!match(tokens, ","))
+                unexpectedToken(tokens.peek());   
+        }
+
+        ensure(tokens, "}");
+
+        return {
+            type: "object",
+            properties
+        };
     }
-    // going to be more complicated than array unfortunately
 }
 
 class FunctionParselet extends Parselet {
@@ -1102,7 +1166,7 @@ function parseVariableStatement (tokens) {
     };
 }
 
-function parseBlock (tokens) {
+function parseBlock$1 (tokens) {
     const statements = [];
 
     ensure(tokens, "{");
@@ -1175,18 +1239,18 @@ function parseTryStatement (tokens) {
         finally: null
     };
 
-    statement.try = parseBlock(tokens);
+    statement.try = parseBlock$1(tokens);
 
     let hasFailureBlock = false;
 
     if (match(tokens, "catch", "identifier")) {
-        statement.params = parseParameters(tokens);
-        statement.catch = parseBlock(tokens);
+        statement.params = parseParameters$1(tokens);
+        statement.catch = parseBlock$1(tokens);
         hasFailureBlock = true;
     }
 
     if (match(tokens, "finally", "identifier")) {
-        statement.finally = parseBlock(tokens);
+        statement.finally = parseBlock$1(tokens);
         hasFailureBlock = true;
     }
 
@@ -1196,7 +1260,7 @@ function parseTryStatement (tokens) {
     return statement;
 }
 
-function parseParameters (tokens) {
+function parseParameters$1 (tokens) {
     const list = [];
 
     ensure(tokens, "(");
@@ -1224,7 +1288,7 @@ function parseConditional (tokens) {
 
     if (match(tokens, "{")) {
         tokens.back();
-        conditional.thenStatement = parseBlock(tokens);
+        conditional.thenStatement = parseBlock$1(tokens);
     }
     else
         conditional.thenStatement = parseExpressionStatement(tokens);
@@ -1236,7 +1300,7 @@ function parseConditional (tokens) {
         }
         else if (match(tokens, "{")) {
             tokens.back();
-            conditional.elseStatement = parseBlock(tokens);
+            conditional.elseStatement = parseBlock$1(tokens);
         }
         else {
             conditional.elseStatement = parseExpressionStatement(tokens);
@@ -1263,7 +1327,7 @@ register$2("return", parseReturnStatement);
 register$2("throw", parseThrowStatement);
 register$2("debugger", parseDebuggerStatement);
 
-register$2("{", parseBlock);
+register$2("{", parseBlock$1);
 register$2(";", parseEmptyStatement);
 
 register$2("try", parseTryStatement);
