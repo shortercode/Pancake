@@ -1,6 +1,7 @@
 import { statementParsers, parseExpressionStatement } from "./Statements.js";
 import { unexpectedToken, unexpectedEnd } from "./error.js";
 import { parseExpression } from "./expressionParser.js";
+import { ensure, getIdentifier } from "./parserutil.js";
 
 function getStatement(tokens) {
     const token = tokens.peek();
@@ -16,7 +17,24 @@ function getStatement(tokens) {
     return parser;
 }
 
+function parseLabelStatement (tokens) {
+    const name = getIdentifier(tokens);
+    ensure(tokens, ":");
+    const statement = parseStatement(tokens);
+    return {
+        type: "label",
+        name,
+        statement
+    };
+}
+
 function parseStatement (tokens) {
+    const current = tokens.peek();
+    const next = tokens.peekNext();
+
+    if (current.type === "identifier" && next && next.value === ":")
+        parseLabelStatement(tokens);
+
     const parser = getStatement(tokens);
 
     if (!parser)
