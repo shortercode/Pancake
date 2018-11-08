@@ -14,7 +14,13 @@ Mostly as a learning exercise. Once it is complete I intend to use it as the bas
 - a new JS minifier
 
 # TODO
-- advanced number lexing e.g. ".1e-10", "0xEE"
-- most of the statement types
-- still a lot of parselets
 - increased test coverage ( seperate lexer verification )
+- class parsing
+- for loops
+- switch statements
+- template literal parsing
+- regex lexing edge case ( requires passing info to lexer from the parser, might not do this as it's quite obscure and totally useless )
+- do while loop
+- with statement
+- import/export
+- arrow functions
