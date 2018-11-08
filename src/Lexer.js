@@ -163,38 +163,78 @@ function lexIdentifier(characters, buffer) {
 
 function lexNumber(characters, buffer) {
     const pos = characters.position();
-    for (const ch of characters) {
-        if (ch == PERIOD) {
-            buffer.push(ch);
-            break;
-        } else if (!isNumber(ch)) {
-            characters.back();
-            const number = buffer.consume();
 
-            return token(
-                "number",
-                pos,
-                number
-            );
+    if (characters.peek() === "0") { // might be integer
+        const next = characters.peekNext().toLowerCase();
+        if (next === "o" || next === "b" || next === "x" || isNumber(next)) {
+            buffer.push(characters.consume());
+            buffer.push(characters.consume());
 
-        } else {
-            buffer.push(ch);
-        }
-    }
-
-    for (const ch of characters) {
-        if (!isNumber(ch)) {
+            for (const ch of characters) {
+                if (!isNumber(ch)) {
+                    characters.back();
+                    break;
+                } else {
+                    buffer.push(ch);
+                }
+            }
 
             return token(
                 "number",
                 pos,
                 buffer.consume()
-            );
+            );   
+        }
+    }
 
+    for (const ch of characters) {
+        if (!isNumber(ch)) {
+            characters.back();
+            break;
         } else {
             buffer.push(ch);
         }
     }
+
+    if (characters.peek() === PERIOD) {
+        buffer.push(characters.consume());
+        for (const ch of characters) {
+            if (!isNumber(ch)) {
+                break;
+            } else {
+                buffer.push(ch);
+            }
+        }
+    }
+
+    const next = characters.peek();
+
+    if (next && next.toLowerCase() === "e") {
+        buffer.push(characters.consume());
+        const next = characters.peek();
+
+        // optional operator
+        if (next === "+" || next === "-")
+            buffer.push(characters.consume());
+        
+        // must have at least 1 number!
+        if (!isNumber(characters.peek()))
+            throw new Error("Invalid or unexpected token");
+
+        for (const ch of characters) {
+            if (!isNumber(ch)) {
+                break;
+            } else {
+                buffer.push(ch);
+            }
+        }
+    }
+
+    return token(
+        "number",
+        pos,
+        buffer.consume()
+    );    
 }
 
 function lexString(characters, delimiter, buffer) {
@@ -239,6 +279,14 @@ function lexSymbol(characters, buffer, regexAllowed) {
             return lexShortcomment(characters, buffer, pos);
         else if (regexAllowed) // depends on context
             return lexRegex(characters, buffer, pos);
+    }
+
+    if (first === PERIOD) { // might be a number starting with a period ( lazy programmers... )
+        const next = characters.peekNext();
+        if (isNumber(next)) {
+            characters.back();
+            return lexNumber(characters, buffer);
+        }
     }
 
     for (const ch of characters) {
