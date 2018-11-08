@@ -1,7 +1,8 @@
 import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser";
-import { match, ensure } from "./parserutil.js";
+import { match, ensure, parseParameters } from "./parserutil.js";
 import { notImplemented, unexpectedToken } from "./error.js";
+import { parseBlock } from "./Statements.js";
 
 const prefixParselets = new Map;
 const identifierPrefixParselets = new Map;
@@ -122,7 +123,7 @@ class ObjectParselet extends Parselet {
         ensure(tokens, "{");
         let properties = [];
 
-        for (const token of tokens) {
+        for (let token of tokens) {
             let { type, value } = token;
 
             const prop = {
@@ -132,26 +133,27 @@ class ObjectParselet extends Parselet {
             };
 
             if (type === "symbol" && value === "}") {
+                tokens.back();
                 break; // no content, early exit
             }
-            else if (type === "identifier") {
-                if (value === "get" || value === "set" || value === "async") {
-                    const next = tokens.peek();
-                    if (next.type === "identifier") {
-                        tokens.consume();
-                        prop.prefix = value;
-                        value = next.value;
-                    }
+            
+            if (type === "identifier" && (value === "get" || value === "set" || value === "async")) {
+                if (!(match(tokens, ":") || match(tokens, "("))) {
+                    token = tokens.consume();
+                    prop.prefix = value;
+                    value = token.value;
+                    type = token.type;
                 }
-                prop.name = value;
+                else
+                    tokens.back(); // unconsume above match!
             }
-            else if (type === "string") {
+            
+            if (type === "string" || type === "number" || type === "identifier") {
                 prop.name = value;
             }
             else if (type === "symbol" && value === "[") {
                 prop.name = parseExpression(tokens, 0);
                 ensure(tokens, "]");
-                expressions.push(null);
             }
             else
                 unexpectedToken(token);
@@ -159,8 +161,8 @@ class ObjectParselet extends Parselet {
             properties.push(prop);
 
             if (match(tokens, "(")) {
+                tokens.back();
                 const params = parseParameters(tokens);
-                ensure(tokens, ")");
                 const body = parseBlock(tokens);
                 prop.value = {
                     type: "function",
@@ -169,12 +171,13 @@ class ObjectParselet extends Parselet {
                 };
             }
             else if (match(tokens, ":")) {
-                const body = parseExpression(tokens, 0);
+                const body = parseExpression(tokens, 1);
                 prop.value = body;
             }
             
             
             if (match(tokens, "}")) {
+                tokens.back();
                 break;
             }
             else if (!match(tokens, ","))
