@@ -179,7 +179,7 @@ const SYMBOLS = createOperatorList([
 ]);
 
 const REGEX_SAFE_SYMBOLS = new Set(
-    "( [ { , ; ... - + ++ -- * ** / % << >> >>> < > <= >= == != === !== & ^ | ! ~ && || ? : = += -= *= /= %= **= <<= >>= >>>= &= ^= |=".split(" ")
+    "{ } (  [ { , ; ... - + ++ -- * ** / % << >> >>> < > <= >= == != === !== & ^ | ! ~ && || ? : = += -= *= /= %= **= <<= >>= >>>= &= ^= |=".split(" ")
 );
 
 function createOperatorList(types) {
@@ -199,7 +199,7 @@ function isLetterExtended(ch) {
 }
 
 function extendedSymbolTest(ch) {
-    return /^[‿_$\u2160-\u2188\u200D\u200C]$/.test(ch);
+    return /^[‿_$\u0336\u2160-\u2188\u200D\u200C]$/.test(ch);
 }
 
 // these tests are not perfect, they will not match emojis (as they are symbols) which are technically valid
@@ -312,38 +312,78 @@ function lexIdentifier(characters, buffer) {
 
 function lexNumber(characters, buffer) {
     const pos = characters.position();
-    for (const ch of characters) {
-        if (ch == PERIOD) {
-            buffer.push(ch);
-            break;
-        } else if (!isNumber(ch)) {
-            characters.back();
-            const number = buffer.consume();
 
-            return token(
-                "number",
-                pos,
-                number
-            );
+    if (characters.peek() === "0") { // might be integer
+        const next = characters.peekNext().toLowerCase();
+        if (next === "o" || next === "b" || next === "x" || isNumber(next)) {
+            buffer.push(characters.consume());
+            buffer.push(characters.consume());
 
-        } else {
-            buffer.push(ch);
-        }
-    }
-
-    for (const ch of characters) {
-        if (!isNumber(ch)) {
+            for (const ch of characters) {
+                if (!isNumber(ch)) {
+                    characters.back();
+                    break;
+                } else {
+                    buffer.push(ch);
+                }
+            }
 
             return token(
                 "number",
                 pos,
                 buffer.consume()
-            );
+            );   
+        }
+    }
 
+    for (const ch of characters) {
+        if (!isNumber(ch)) {
+            characters.back();
+            break;
         } else {
             buffer.push(ch);
         }
     }
+
+    if (characters.peek() === PERIOD) {
+        buffer.push(characters.consume());
+        for (const ch of characters) {
+            if (!isNumber(ch)) {
+                break;
+            } else {
+                buffer.push(ch);
+            }
+        }
+    }
+
+    const next = characters.peek();
+
+    if (next && next.toLowerCase() === "e") {
+        buffer.push(characters.consume());
+        const next = characters.peek();
+
+        // optional operator
+        if (next === "+" || next === "-")
+            buffer.push(characters.consume());
+        
+        // must have at least 1 number!
+        if (!isNumber(characters.peek()))
+            throw new Error("Invalid or unexpected token");
+
+        for (const ch of characters) {
+            if (!isNumber(ch)) {
+                break;
+            } else {
+                buffer.push(ch);
+            }
+        }
+    }
+
+    return token(
+        "number",
+        pos,
+        buffer.consume()
+    );    
 }
 
 function lexString(characters, delimiter, buffer) {
@@ -388,6 +428,14 @@ function lexSymbol(characters, buffer, regexAllowed) {
             return lexShortcomment(characters, buffer, pos);
         else if (regexAllowed) // depends on context
             return lexRegex(characters, buffer, pos);
+    }
+
+    if (first === PERIOD) { // might be a number starting with a period ( lazy programmers... )
+        const next = characters.peekNext();
+        if (isNumber(next)) {
+            characters.back();
+            return lexNumber(characters, buffer);
+        }
     }
 
     for (const ch of characters) {
@@ -623,6 +671,9 @@ function createCharacterStream (str) {
                 value: ch,
                 done: i > l
             }
+        },
+        consume () {
+            return this.next().value;
         },
         position() {
             return pos.slice(0);
@@ -910,7 +961,9 @@ class ObjectParselet extends Parselet {
 }
 
 class FunctionParselet extends Parselet {
-    // pipe back to common function parser?
+    parse(tokens) {
+        return parseFunction(tokens);
+    }
 }
 
 class ClassParselet extends Parselet {
@@ -1215,16 +1268,19 @@ function parseVariableStatement (tokens) {
 
     while (!tokens.done()) {
 
-        const name = getIdentifier(tokens);
+        const name = parseExpression(tokens, 4); // higher precedence than assignment
         let initialiser = null;
 
         if (match(tokens, "="))
-            initialiser = parseExpression(tokens, 0);
-        
+            initialiser = parseExpression(tokens, 4);
+
         list.push({
             name,
             initialiser
         });
+
+        if (!match(tokens, ","))
+            break;
     }
 
     endStatement(tokens);
@@ -1249,6 +1305,29 @@ function parseBlock (tokens) {
     return {
         type: "block",
         statements
+    };
+}
+
+function parseFunction (tokens) {
+    ensure(tokens, "function", "identifier");
+
+    const next = tokens.peek();
+    
+    let name;
+
+    if (!next)
+        unexpectedEnd();
+
+    if (next.type === "identifier")
+        name = getIdentifier(tokens);
+
+    const parameters = parseParameters(tokens);
+    const block = parseBlock(tokens);
+
+    return {
+        type: "function",
+        parameters,
+        block
     };
 }
 
@@ -1331,6 +1410,7 @@ function parseTryStatement (tokens) {
 
 function parseConditional (tokens) {
     const conditional = {
+        type: "conditional",
         condition: null,
         thenStatement: null,
         elseStatement: null
@@ -1364,6 +1444,30 @@ function parseConditional (tokens) {
     return conditional;
 }
 
+function parseWhileLoop (tokens) {
+
+    const conditional = {
+        type: "while",
+        condition: null,
+        thenStatement: null
+    };
+
+    ensure(tokens, "while", "identifier");
+    ensure(tokens, "(");
+    conditional.condition = parseExpression(tokens, 0);
+    ensure(tokens, ")");
+
+    if (match(tokens, "{")) {
+        tokens.back();
+        conditional.thenStatement = parseBlock(tokens);
+    }
+    else {
+        conditional.thenStatement = parseExpressionStatement(tokens);
+    }
+
+    return conditional;
+}
+
 
 
 function register$2 (value, fn) {
@@ -1391,16 +1495,15 @@ register$2("if", parseConditional);
 register$2("switch", notImplemented);
 
 
-register$2("function", notImplemented);
+register$2("function", parseFunction);
 register$2("async", notImplemented);
 register$2("class", notImplemented);
 register$2("do", notImplemented);
 register$2("for", notImplemented);
-register$2("while", notImplemented);
+register$2("while", parseWhileLoop);
 
 register$2("import", notImplemented);
 register$2("export", notImplemented);
-register$2("label", notImplemented);
 register$2("with", notImplemented);
 
 function getStatement(tokens) {
@@ -1417,7 +1520,24 @@ function getStatement(tokens) {
     return parser;
 }
 
+function parseLabelStatement (tokens) {
+    const name = getIdentifier(tokens);
+    ensure(tokens, ":");
+    const statement = parseStatement(tokens);
+    return {
+        type: "label",
+        name,
+        statement
+    };
+}
+
 function parseStatement (tokens) {
+    const current = tokens.peek();
+    const next = tokens.peekNext();
+
+    if (current.type === "identifier" && next && next.value === ":")
+        parseLabelStatement(tokens);
+
     const parser = getStatement(tokens);
 
     if (!parser)
