@@ -1,6 +1,6 @@
 import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser.js";
-import { match, ensure, parseParameters } from "./parserutil.js";
+import { match, ensure, parseParameters, getIdentifier } from "./parserutil.js";
 import { parseBlock } from "./Statements.js";
 
 const infixParselets = new Map;
@@ -75,7 +75,7 @@ class MemberParselet extends Parselet {
     parse(tokens, left) {
         ensure(tokens, ".");
 
-        const right = parseExpression(tokens, this.precedence);
+        const right = getIdentifier(tokens);
 
         return {
             type: "member",
