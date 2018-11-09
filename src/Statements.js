@@ -85,6 +85,7 @@ function parseFunction (tokens) {
     ensure(tokens, "function", "identifier");
 
     const next = tokens.peek();
+    let name = null;
     
     if (!next)
         unexpectedEnd();
@@ -97,6 +98,7 @@ function parseFunction (tokens) {
 
     return {
         type: "function",
+        name,
         parameters,
         block
     };
@@ -195,24 +197,15 @@ function parseConditional (tokens) {
     conditional.condition = parseExpression(tokens, 0);
     ensure(tokens, ")");
 
-    if (match(tokens, "{")) {
-        tokens.back();
-        conditional.thenStatement = parseBlock(tokens);
-    }
-    else
-        conditional.thenStatement = parseExpressionStatement(tokens);
+    conditional.thenStatement = parseStatement(tokens);
 
     if (match(tokens, "else", "identifier")) {
         if (match(tokens, "if", "identifier")) {
             tokens.back();
             conditional.elseStatement = parseConditional(tokens);
         }
-        else if (match(tokens, "{")) {
-            tokens.back();
-            conditional.elseStatement = parseBlock(tokens);
-        }
         else {
-            conditional.elseStatement = parseExpressionStatement(tokens);
+            conditional.elseStatement = parseStatement(tokens);
         }
     }
 
@@ -235,12 +228,14 @@ function parseWith (tokens) {
 
 function parseDo (tokens) {
     ensure(tokens, "do", "identifier");
-    const block = parseBlock(tokens);
+
+    const block = parseStatement(tokens);
+
+    ensure(tokens, "while", "identifier");
 
     ensure(tokens, "(");
     const expression = parseExpression(tokens, 0);
     ensure(tokens, ")");
-    
 
     return {
         type: "do",
@@ -250,7 +245,24 @@ function parseDo (tokens) {
 }
 
 function parseForLoop (tokens) {
+    ensure(tokens, "for", "identifier");
+    ensure(tokens, "(");
+    const pre = parseStatement(tokens);
+    ensure(tokens, ";");
+    const condition = parseExpression(tokens);
+    ensure(tokens, ";");
+    const post = parseExpression(tokens);
+    ensure(tokens, ")");
+    
+    const block = parseStatement(tokens);
 
+    return {
+        type: "for",
+        pre,
+        condition,
+        post,
+        block
+    };
 }
 
 function parseAsync (tokens) {
@@ -326,7 +338,7 @@ register("async", parseAsync);
 register("switch", notImplemented);
 
 register("class", notImplemented);
-register("for", notImplemented);
+register("for", parseForLoop);
 register("import", notImplemented);
 register("export", notImplemented);
 
