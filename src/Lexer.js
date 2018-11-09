@@ -166,12 +166,19 @@ function lexNumber(characters, buffer) {
 
     if (characters.peek() === "0") { // might be integer
         const next = characters.peekNext().toLowerCase();
-        if (next === "o" || next === "b" || next === "x" || isNumber(next)) {
+
+        const isOctal = next === "o"; // 01 octal format is depreciated for 0o1
+        const isBinary = next === "b";
+        const isHex = next === "x";
+
+        const test = isOctal ? /^[0-7]$/ : isBinary ? /^[01]$/ : isHex ? /^[0-9a-f]$/i : null;
+
+        if (test) {
             buffer.push(characters.consume());
             buffer.push(characters.consume());
 
             for (const ch of characters) {
-                if (!isNumber(ch)) {
+                if (!test.test(ch)) {
                     characters.back();
                     break;
                 } else {
@@ -183,8 +190,8 @@ function lexNumber(characters, buffer) {
                 "number",
                 pos,
                 buffer.consume()
-            );   
-        }
+            );
+        }   
     }
 
     for (const ch of characters) {
