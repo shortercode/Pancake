@@ -83,8 +83,6 @@ function parseFunction (tokens) {
 
     const next = tokens.peek();
     
-    let name;
-
     if (!next)
         unexpectedEnd();
 
@@ -99,6 +97,10 @@ function parseFunction (tokens) {
         parameters,
         block
     };
+}
+
+function parseClass (tokens) {
+    ensure(tokens, "class", "identifier");
 }
 
 function parseSimple (tokens, keyword) {
@@ -214,8 +216,46 @@ function parseConditional (tokens) {
     return conditional;
 }
 
+function parseWith (tokens) {
+    ensure(tokens, "with", "identifier");
+    ensure(tokens, "(");
+    const expression = parseExpression(tokens, 0);
+    ensure(tokens, ")");
+    const block = parseBlock(tokens);
+
+    return {
+        type: "with",
+        expression,
+        block
+    }
+}
+
+function parseDo (tokens) {
+    ensure(tokens, "do", "identifier");
+    const block = parseBlock(tokens);
+
+    ensure(tokens, "(");
+    const expression = parseExpression(tokens, 0);
+    ensure(tokens, ")");
+    
+
+    return {
+        type: "do",
+        expression,
+        block
+    }
+}
+
 function parseForLoop (tokens) {
 
+}
+
+function parseAsync (tokens) {
+    ensure(tokens, "async", "identifier");
+    const fn = parseExpression(tokens);
+    // TODO ensure fn is a function or arrow function!
+    fn.type = "async-function";
+    return fn;
 }
 
 function parseWhileLoop (tokens) {
@@ -264,20 +304,20 @@ register(";", parseEmptyStatement);
 
 register("try", parseTryStatement);
 
-
 register("if", parseConditional);
-register("switch", notImplemented);
-
-
+register("while", parseWhileLoop);
+register("with", parseWith);
+register("do", parseDo);
 register("function", parseFunction);
+
+
+
+register("switch", notImplemented);
 register("async", notImplemented);
 register("class", notImplemented);
-register("do", notImplemented);
 register("for", notImplemented);
-register("while", parseWhileLoop);
-
 register("import", notImplemented);
 register("export", notImplemented);
-register("with", notImplemented);
+
 
 export { statementParsers, parseExpressionStatement, parseBlock, parseFunction };
