@@ -321,12 +321,19 @@ function lexNumber(characters, buffer) {
 
     if (characters.peek() === "0") { // might be integer
         const next = characters.peekNext().toLowerCase();
-        if (next === "o" || next === "b" || next === "x" || isNumber(next)) {
+
+        const isOctal = next === "o"; // 01 octal format is depreciated for 0o1
+        const isBinary = next === "b";
+        const isHex = next === "x";
+
+        const test = isOctal ? /^[0-7]$/ : isBinary ? /^[01]$/ : isHex ? /^[0-9a-f]$/i : null;
+
+        if (test) {
             buffer.push(characters.consume());
             buffer.push(characters.consume());
 
             for (const ch of characters) {
-                if (!isNumber(ch)) {
+                if (!test.test(ch)) {
                     characters.back();
                     break;
                 } else {
@@ -338,8 +345,8 @@ function lexNumber(characters, buffer) {
                 "number",
                 pos,
                 buffer.consume()
-            );   
-        }
+            );
+        }   
     }
 
     for (const ch of characters) {
@@ -721,7 +728,7 @@ function unexpectedToken (token, expected) {
         throw new Error(`Unexpected token "${token.value}" @ "${token.position}"`);
 }
 
-function unexpectedEnd$1 () {
+function unexpectedEnd () {
     throw new Error("Unexpected end of input");
 }
 
@@ -736,7 +743,7 @@ function getIdentifier (tokens) {
 
 function notEnd (tokens) {
     if (tokens.done())
-        unexpectedEnd$1();
+        unexpectedEnd();
 }
 
 function match (tokens, value, type = "symbol") {
@@ -803,16 +810,7 @@ class PrefixOperatorParselet extends Parselet {
 
 class AsyncParselet extends Parselet {
     parse (tokens) {
-        const operator = tokens.consume();
-        const expression = parseExpression(tokens, this.precedence);
-
-        // TODO expression must be function or arrow function
-
-        return {
-            type: "async-operator",
-            operator,
-            expression
-        };
+        return parseAsync(tokens);
     }
 }
 
@@ -973,7 +971,9 @@ class FunctionParselet extends Parselet {
 }
 
 class ClassParselet extends Parselet {
-    // pipe back to common class parser?
+    parse(tokens) {
+        return parseClass(tokens);
+    }
 }
 
 class ImportParselet extends Parselet {
@@ -1092,12 +1092,34 @@ class MemberParselet extends Parselet {
     parse(tokens, left) {
         ensure(tokens, ".");
 
-        const right = parseExpression(tokens, this.precedence);
+        const right = getIdentifier(tokens);
 
         return {
             type: "member",
             left,
             right
+        };
+    }
+}
+
+class ArrowFunction extends Parselet {
+    parse(tokens, left) {
+        // TODO validate left
+        ensure(tokens, "=>");
+
+        let block;
+
+        if (match(tokens, "{")) {
+            tokens.back();
+            block = parseBlock(tokens);
+        }
+        else
+            block = parseExpression(this.precedence - 1); // right associative
+
+        return {
+            type: "arrow-function",
+            parameters: left,
+            block
         };
     }
 }
@@ -1135,6 +1157,7 @@ register$1(">>>=", new BinaryOperatorParselet(3, true));
 register$1("&=", new BinaryOperatorParselet(3, true));
 register$1("^=", new BinaryOperatorParselet(3, true));
 register$1("|=", new BinaryOperatorParselet(3, true));
+register$1("=>", new ArrowFunction(3));
 
 register$1("?", new ConditionalParselet(4));
 
@@ -1209,7 +1232,7 @@ function getInfix(tokens) {
 function getPrefix(tokens) {
     const token = tokens.peek();
     if (!token)
-        unexpectedEnd$1();
+        unexpectedEnd();
 
     if (token.type === "symbol")
         return prefixParselets.get(token.value);
@@ -1251,11 +1274,32 @@ function endStatement (tokens) {
         return;
 
     tokens.back();
+
+    if (token.type === "symbol" && token.value === "}") // end of block - all good
+        return;
     
     if (token.newline) // for newline detection
         return;
 
-    // unexpectedToken(token, ";");
+    unexpectedToken(token, ";");
+}
+
+function shouldEndStatement (tokens) {
+    const token = tokens.peek();
+
+    if (!token) // end of input - thats fine
+        return true;
+
+    if (token.type === "symbol" && token.value === ";") // semicolon end - all good
+        return true;
+
+    if (token.type === "symbol" && token.value === "}") // end of block - all good
+        return true;
+    
+    if (token.newline) // for newline detection
+        return true;
+
+    return false;
 }
 
 function parseExpressionStatement (tokens) {
@@ -1318,9 +1362,8 @@ function parseFunction (tokens) {
     ensure(tokens, "function", "identifier");
 
     const next = tokens.peek();
+    let name = null;
     
-    let name;
-
     if (!next)
         unexpectedEnd();
 
@@ -1332,17 +1375,62 @@ function parseFunction (tokens) {
 
     return {
         type: "function",
+        name,
         parameters,
         block
     };
 }
 
+function parseClass (tokens) {
+    ensure(tokens, "class", "identifier");
+    const name = getIdentifier(tokens);
+    let superclass;
+    
+    if (match(tokens, "extends", "identifier"))
+        superclass = parseExpression(tokens, 0);
+
+    ensure(tokens, "{");
+
+    const methods = [];
+
+    do {
+        // TODO computed names
+        // TODO get/set/static/async
+
+        let name = getIdentifier(tokens);
+        let parameters = parseParameters(tokens);
+        let body = parseBlock(tokens);
+
+        methods.push({
+            name,
+            parameters,
+            body
+        });
+    }
+    while (!match(tokens, "}"))
+
+    return {
+        type: "class",
+        name,
+        superclass,
+        methods
+    };
+}
+
 function parseSimple (tokens, keyword) {
     ensure(tokens, keyword, "identifier");
-    const statement = parseExpressionStatement(tokens);
-    statement.type = keyword;
 
-    return statement;
+    const result = {
+        type: keyword,
+        statement: null
+    };
+
+    if (!shouldEndStatement(tokens))
+        result.statement = parseExpressionStatement(tokens);
+
+    endStatement(tokens);
+
+    return result;
 }
 
 function parseReturnStatement (tokens) {
@@ -1371,7 +1459,7 @@ function parseFlow (tokens) {
 
     if (!next) unexpectedEnd();
 
-    if (next.newline == false && next.type == "identifier")
+    if (next.isNewline == false && next.type == "identifier")
         label = next.value;
     
     endStatement(tokens);
@@ -1426,28 +1514,94 @@ function parseConditional (tokens) {
     conditional.condition = parseExpression(tokens, 0);
     ensure(tokens, ")");
 
-    if (match(tokens, "{")) {
-        tokens.back();
-        conditional.thenStatement = parseBlock(tokens);
-    }
-    else
-        conditional.thenStatement = parseExpressionStatement(tokens);
+    conditional.thenStatement = parseStatement(tokens);
 
     if (match(tokens, "else", "identifier")) {
         if (match(tokens, "if", "identifier")) {
             tokens.back();
             conditional.elseStatement = parseConditional(tokens);
         }
-        else if (match(tokens, "{")) {
-            tokens.back();
-            conditional.elseStatement = parseBlock(tokens);
-        }
         else {
-            conditional.elseStatement = parseExpressionStatement(tokens);
+            conditional.elseStatement = parseStatement(tokens);
         }
     }
 
     return conditional;
+}
+
+function parseWith (tokens) {
+    ensure(tokens, "with", "identifier");
+    ensure(tokens, "(");
+    const expression = parseExpression(tokens, 0);
+    ensure(tokens, ")");
+    const block = parseStatement(tokens);
+
+    return {
+        type: "with",
+        expression,
+        block
+    }
+}
+
+function parseDo (tokens) {
+    ensure(tokens, "do", "identifier");
+
+    const block = parseStatement(tokens);
+
+    ensure(tokens, "while", "identifier");
+
+    ensure(tokens, "(");
+    const expression = parseExpression(tokens, 0);
+    ensure(tokens, ")");
+
+    return {
+        type: "do",
+        expression,
+        block
+    }
+}
+
+function parseForLoop (tokens) {
+    ensure(tokens, "for", "identifier");
+    ensure(tokens, "(");
+    const pre = parseStatement(tokens);
+    let condition = null;
+    if (!match(tokens, ";")) {
+        condition = parseExpression(tokens, 0);
+        ensure(tokens, ";");
+    }
+    let post = null;
+
+    if (!match(tokens, ")")) {
+        post = parseExpression(tokens, 0);
+        ensure(tokens, ")");
+    }
+    
+    const block = parseStatement(tokens);
+
+    return {
+        type: "for",
+        pre,
+        condition,
+        post,
+        block
+    };
+}
+
+function parseAsync (tokens) {
+    ensure(tokens, "async", "identifier");
+
+    const pre = tokens.peek();
+    const fn = parseExpression(tokens);
+
+    if (fn.type === "function")
+        fn.type = "async-function";
+    else if (fn.type === "arrow-function")
+        fn.type = "async-arrow-function";
+    else
+        unexpectedToken(pre, "function or arrow function");
+    
+    return fn;
 }
 
 function parseWhileLoop (tokens) {
@@ -1474,8 +1628,6 @@ function parseWhileLoop (tokens) {
     return conditional;
 }
 
-
-
 function register$2 (value, fn) {
     statementParsers.set(value, fn);
 }
@@ -1496,27 +1648,25 @@ register$2(";", parseEmptyStatement);
 
 register$2("try", parseTryStatement);
 
-
 register$2("if", parseConditional);
-register$2("switch", notImplemented);
-
-
-register$2("function", parseFunction);
-register$2("async", notImplemented);
-register$2("class", notImplemented);
-register$2("do", notImplemented);
-register$2("for", notImplemented);
 register$2("while", parseWhileLoop);
+register$2("with", parseWith);
+register$2("do", parseDo);
+register$2("function", parseFunction);
+register$2("async", parseAsync);
+register$2("for", parseForLoop);
+register$2("class", parseClass);
+
+register$2("switch", notImplemented);
 
 register$2("import", notImplemented);
 register$2("export", notImplemented);
-register$2("with", notImplemented);
 
 function getStatement(tokens) {
     const token = tokens.peek();
 
     if (!token)
-        unexpectedEnd$1();
+        unexpectedEnd();
 
     const parser = statementParsers.get(token.value);
 
@@ -1542,7 +1692,7 @@ function parseStatement (tokens) {
     const next = tokens.peekNext();
 
     if (current.type === "identifier" && next && next.value === ":")
-        parseLabelStatement(tokens);
+        return parseLabelStatement(tokens);
 
     const parser = getStatement(tokens);
 
