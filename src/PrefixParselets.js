@@ -2,7 +2,7 @@ import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser";
 import { match, ensure, parseParameters } from "./parserutil.js";
 import { notImplemented, unexpectedToken } from "./error.js";
-import { parseBlock, parseFunction } from "./Statements.js";
+import { parseBlock, parseFunction, parseAsync } from "./Statements.js";
 
 const prefixParselets = new Map;
 const identifierPrefixParselets = new Map;
@@ -30,16 +30,7 @@ class PrefixOperatorParselet extends Parselet {
 
 class AsyncParselet extends Parselet {
     parse (tokens) {
-        const operator = tokens.consume();
-        const expression = parseExpression(tokens, this.precedence);
-
-        // TODO expression must be function or arrow function
-
-        return {
-            type: "async-operator",
-            operator,
-            expression
-        };
+        return parseAsync(tokens);
     }
 }
 

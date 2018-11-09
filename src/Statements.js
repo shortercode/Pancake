@@ -15,11 +15,14 @@ function endStatement (tokens) {
         return;
 
     tokens.back();
+
+    if (token.type === "symbol" && token.value === "}") // end of block - all good
+        return;
     
     if (token.newline) // for newline detection
         return;
 
-    // unexpectedToken(token, ";");
+    unexpectedToken(token, ";");
 }
 
 function parseExpressionStatement (tokens) {
@@ -252,9 +255,17 @@ function parseForLoop (tokens) {
 
 function parseAsync (tokens) {
     ensure(tokens, "async", "identifier");
+
+    const pre = tokens.peek();
     const fn = parseExpression(tokens);
-    // TODO ensure fn is a function or arrow function!
-    fn.type = "async-function";
+
+    if (fn.type === "function")
+        fn.type = "async-function";
+    else if (fn.type === "arrow-function")
+        fn.type = "async-arrow-function";
+    else
+        unexpectedToken(pre, "function or arrow function");
+    
     return fn;
 }
 
@@ -309,15 +320,15 @@ register("while", parseWhileLoop);
 register("with", parseWith);
 register("do", parseDo);
 register("function", parseFunction);
-
+register("async", parseAsync);
 
 
 register("switch", notImplemented);
-register("async", notImplemented);
+
 register("class", notImplemented);
 register("for", notImplemented);
 register("import", notImplemented);
 register("export", notImplemented);
 
 
-export { statementParsers, parseExpressionStatement, parseBlock, parseFunction };
+export { statementParsers, parseExpressionStatement, parseBlock, parseFunction, parseAsync };
