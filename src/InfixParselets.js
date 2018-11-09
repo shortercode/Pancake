@@ -1,6 +1,7 @@
 import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser.js";
 import { match, ensure, parseParameters } from "./parserutil.js";
+import { parseBlock } from "./Statements.js";
 
 const infixParselets = new Map;
 const identifierInfixParselets = new Map;
@@ -84,6 +85,28 @@ class MemberParselet extends Parselet {
     }
 }
 
+class ArrowFunction extends Parselet {
+    parse(tokens, left) {
+        // TODO validate left
+        ensure(tokens, "=>");
+
+        let block;
+
+        if (match(tokens, "{")) {
+            tokens.back();
+            block = parseBlock(tokens);
+        }
+        else
+            block = parseExpression(this.precedence - 1); // right associative
+
+        return {
+            type: "arrow-function",
+            parameters: left,
+            block
+        };
+    }
+}
+
 class ComputerMemberParselet extends Parselet {
     parse(tokens, left) {
         ensure(tokens, "[");
@@ -117,6 +140,7 @@ register(">>>=", new BinaryOperatorParselet(3, true));
 register("&=", new BinaryOperatorParselet(3, true));
 register("^=", new BinaryOperatorParselet(3, true));
 register("|=", new BinaryOperatorParselet(3, true));
+register("=>", new ArrowFunction(3));
 
 register("?", new ConditionalParselet(4));
 
