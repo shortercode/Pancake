@@ -1,6 +1,6 @@
 import { parseExpression } from "./expressionParser";
 import { ensure, match, parseParameters, getIdentifier } from "./parserutil.js";
-import { notImplemented, unexpectedToken } from "./error.js";
+import { notImplemented, unexpectedToken, unexpectedEnd } from "./error.js";
 import { parseStatement } from "./Parser.js";
 
 const statementParsers = new Map;
@@ -23,6 +23,24 @@ function endStatement (tokens) {
         return;
 
     unexpectedToken(token, ";");
+}
+
+function shouldEndStatement (tokens) {
+    const token = tokens.peek();
+
+    if (!token) // end of input - thats fine
+        return true;
+
+    if (token.type === "symbol" && token.value === ";") // semicolon end - all good
+        return true;
+
+    if (token.type === "symbol" && token.value === "}") // end of block - all good
+        return true;
+    
+    if (token.newline) // for newline detection
+        return true;
+
+    return false;
 }
 
 function parseExpressionStatement (tokens) {
@@ -142,10 +160,18 @@ function parseClass (tokens) {
 
 function parseSimple (tokens, keyword) {
     ensure(tokens, keyword, "identifier");
-    const statement = parseExpressionStatement(tokens);
-    statement.type = keyword;
 
-    return statement;
+    const result = {
+        type: keyword,
+        statement: null
+    };
+
+    if (!shouldEndStatement(tokens))
+        result.statement = parseExpressionStatement(tokens);
+
+    endStatement(tokens);
+
+    return result;
 }
 
 function parseReturnStatement (tokens) {
@@ -174,7 +200,7 @@ function parseFlow (tokens) {
 
     if (!next) unexpectedEnd();
 
-    if (next.newline == false && next.type == "identifier")
+    if (next.isNewline == false && next.type == "identifier")
         label = next.value;
     
     endStatement(tokens);
@@ -249,7 +275,7 @@ function parseWith (tokens) {
     ensure(tokens, "(");
     const expression = parseExpression(tokens, 0);
     ensure(tokens, ")");
-    const block = parseBlock(tokens);
+    const block = parseStatement(tokens);
 
     return {
         type: "with",
@@ -280,11 +306,17 @@ function parseForLoop (tokens) {
     ensure(tokens, "for", "identifier");
     ensure(tokens, "(");
     const pre = parseStatement(tokens);
-    ensure(tokens, ";");
-    const condition = parseExpression(tokens);
-    ensure(tokens, ";");
-    const post = parseExpression(tokens);
-    ensure(tokens, ")");
+    let condition = null;
+    if (!match(tokens, ";")) {
+        condition = parseExpression(tokens, 0);
+        ensure(tokens, ";");
+    }
+    let post = null;
+
+    if (!match(tokens, ")")) {
+        post = parseExpression(tokens, 0);
+        ensure(tokens, ")");
+    }
     
     const block = parseStatement(tokens);
 
