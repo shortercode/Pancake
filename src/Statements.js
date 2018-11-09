@@ -106,6 +106,38 @@ function parseFunction (tokens) {
 
 function parseClass (tokens) {
     ensure(tokens, "class", "identifier");
+    const name = getIdentifier(tokens);
+    let superclass;
+    
+    if (match(tokens, "extends", "identifier"))
+        superclass = parseExpression(tokens, 0);
+
+    ensure(tokens, "{");
+
+    const methods = [];
+
+    do {
+        // TODO computed names
+        // TODO get/set/static/async
+
+        let name = getIdentifier(tokens);
+        let parameters = parseParameters(tokens);
+        let body = parseBlock(tokens);
+
+        methods.push({
+            name,
+            parameters,
+            body
+        });
+    }
+    while (!match(tokens, "}"))
+
+    return {
+        type: "class",
+        name,
+        superclass,
+        methods
+    };
 }
 
 function parseSimple (tokens, keyword) {
@@ -305,8 +337,6 @@ function parseWhileLoop (tokens) {
     return conditional;
 }
 
-
-
 function register (value, fn) {
     statementParsers.set(value, fn);
 }
@@ -333,14 +363,13 @@ register("with", parseWith);
 register("do", parseDo);
 register("function", parseFunction);
 register("async", parseAsync);
-
+register("for", parseForLoop);
+register("class", parseClass);
 
 register("switch", notImplemented);
 
-register("class", notImplemented);
-register("for", parseForLoop);
 register("import", notImplemented);
 register("export", notImplemented);
 
 
-export { statementParsers, parseExpressionStatement, parseBlock, parseFunction, parseAsync };
+export { statementParsers, parseExpressionStatement, parseBlock, parseFunction, parseAsync, parseClass };

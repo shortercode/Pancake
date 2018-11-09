@@ -2,7 +2,7 @@ import Parselet from "./Parselet.js";
 import { parseExpression } from "./expressionParser";
 import { match, ensure, parseParameters } from "./parserutil.js";
 import { notImplemented, unexpectedToken } from "./error.js";
-import { parseBlock, parseFunction, parseAsync } from "./Statements.js";
+import { parseBlock, parseFunction, parseAsync, parseClass } from "./Statements.js";
 
 const prefixParselets = new Map;
 const identifierPrefixParselets = new Map;
@@ -191,7 +191,9 @@ class FunctionParselet extends Parselet {
 }
 
 class ClassParselet extends Parselet {
-    // pipe back to common class parser?
+    parse(tokens) {
+        return parseClass(tokens);
+    }
 }
 
 class ImportParselet extends Parselet {
