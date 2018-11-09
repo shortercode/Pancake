@@ -33,7 +33,7 @@ function parseStatement (tokens) {
     const next = tokens.peekNext();
 
     if (current.type === "identifier" && next && next.value === ":")
-        parseLabelStatement(tokens);
+        return parseLabelStatement(tokens);
 
     const parser = getStatement(tokens);
 
