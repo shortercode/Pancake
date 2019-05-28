@@ -34,6 +34,45 @@ class AsyncParselet extends Parselet {
     }
 }
 
+class CompleteTemplateLiteralParselet extends Parselet {
+    parse (tokens) {
+        const token = tokens.consume();
+
+        return {
+            type: "templateliteral",
+            chunks: [ token.value ]
+        };
+    }
+}
+
+class TemplateLiteralParselet extends Parselet {
+    parse (tokens) {
+        const first = tokens.consume();
+        const chunks = [ first.value ];
+
+        while (true) {
+            const expr = parseExpression(tokens, 0);
+            const next = tokens.consume();
+
+            if (next.type === "templateliteralend") {
+                chunks.push(expr, next.value);
+                break;
+            }
+            else if (next.type === "templateliteralchunk") {
+                chunks.push(expr, next.value);
+            }
+            else {
+                throw new Error("Expected continuation of template literal");
+            }
+        } 
+
+        return {
+            type: "templateliteral",
+            chunks
+        };
+    }
+}
+
 class NameParselet extends Parselet {
     parse (tokens) {
         const token = tokens.consume();

@@ -104,6 +104,7 @@ function token (type, position, value, isNewline = false) {
 
 function* lexTemplateliteral(characters, buffer) {
     let position = characters.position();
+    let isFirst = true;
     characters.next(); // consume backtick
 
     for (const ch of characters) {
@@ -116,10 +117,12 @@ function* lexTemplateliteral(characters, buffer) {
             const string = buffer.consume();
 
             yield token(
-                "templateliteral",
+                isFirst ? "templateliteralstart": "templateliteralchunk",
                 position,
                 string
             );
+            
+            isFirst = false;
 
             yield* lexer(characters, buffer, true);
 
@@ -130,7 +133,7 @@ function* lexTemplateliteral(characters, buffer) {
             const string = buffer.consume();
 
             yield token(
-                "templateliteral",
+                isFirst ? "templateliteralcomplete" : "templateliteralend",
                 position,
                 string
             );
