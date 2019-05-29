@@ -261,7 +261,8 @@ register("identifier", new NameParselet);
 register("number", new NumberParselet);
 register("regex", new RegexParselet);
 register("string", new StringParselet);
-// TODO template literal
+register("templateliteralstart", new TemplateLiteralParselet);
+register("templateliteralcomplete", new CompleteTemplateLiteralParselet);
 register("[", new ArrayParselet);
 register("{", new ObjectParselet);
 register("(", new GroupParselet(20));

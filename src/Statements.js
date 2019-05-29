@@ -19,7 +19,7 @@ function endStatement (tokens) {
     if (token.type === "symbol" && token.value === "}") // end of block - all good
         return;
     
-    if (token.newline) // for newline detection
+    if (token.isNewline) // for newline detection
         return;
 
     unexpectedToken(token, ";");
@@ -37,7 +37,7 @@ function shouldEndStatement (tokens) {
     if (token.type === "symbol" && token.value === "}") // end of block - all good
         return true;
     
-    if (token.newline) // for newline detection
+    if (token.isNewline) // for newline detection
         return true;
 
     return false;
@@ -87,7 +87,7 @@ function parseBlock (tokens) {
 
     ensure(tokens, "{");
 
-    while (!tokens.done()) {
+    while (true) {
         if (match(tokens, "}"))
             break;
         statements.push(parseStatement(tokens));
@@ -195,13 +195,14 @@ function parseEmptyStatement (tokens) {
 
 function parseFlow (tokens) {
     const type = getIdentifier(tokens);
-    const next = tokens.consume();
+    const next = tokens.peek();
     let label = null;
 
-    if (!next) unexpectedEnd();
-
-    if (next.isNewline == false && next.type == "identifier")
+    if (next.type == "identifier")
+    {
         label = next.value;
+        tokens.consume();
+    }
     
     endStatement(tokens);
 
@@ -358,15 +359,68 @@ function parseWhileLoop (tokens) {
     conditional.condition = parseExpression(tokens, 0);
     ensure(tokens, ")");
 
-    if (match(tokens, "{")) {
-        tokens.back();
-        conditional.thenStatement = parseBlock(tokens);
-    }
-    else {
-        conditional.thenStatement = parseExpressionStatement(tokens);
-    }
+    conditional.thenStatement = parseStatement(tokens);
 
     return conditional;
+}
+
+function parseSwitchStatement (tokens) {
+
+    // wow the classic c style switch statement is a mess...
+
+    ensure(tokens, "switch", "identifier");
+    ensure(tokens, "(");
+    const test = parseExpression(tokens, 0);
+    const cases = [];
+    ensure(tokens, ")");
+    ensure(tokens, "{");
+    
+    while (!tokens.done()) {
+        let test = null;
+        let consequents = [];
+
+        if (match(tokens, "}")) {
+            break;
+        }
+        else if (match(tokens, "case", "identifier")) {
+            test = parseExpression(tokens, 0);
+            ensure(tokens, ":");
+        }
+        else if (match(tokens, "default", "identifier")) {
+            ensure(tokens, ":");
+        }
+        else {
+            throw new Error("Expected case");
+        }
+
+        while (!tokens.done()) {
+            const isEnd = match(tokens, "}");
+            const isCaseNext = match(tokens, "case", "identifier");
+            const isDefaultNext = match(tokens, "default", "identifier");
+
+            if (isEnd) {
+                break;
+            }
+            else if (isCaseNext || isDefaultNext) {
+                tokens.back()
+                break;
+            }
+
+            const consequent = parseStatement(tokens);
+            consequents.push(consequent);
+        }
+
+        cases.push({
+            test,
+            consequents
+        });
+    }
+
+    return {
+        type: "switch",
+        test,
+        cases
+    };
 }
 
 function register (value, fn) {
@@ -398,7 +452,7 @@ register("async", parseAsync);
 register("for", parseForLoop);
 register("class", parseClass);
 
-register("switch", notImplemented);
+register("switch", parseSwitchStatement);
 
 register("import", notImplemented);
 register("export", notImplemented);

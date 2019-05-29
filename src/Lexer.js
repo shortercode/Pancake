@@ -210,6 +210,7 @@ function lexNumber(characters, buffer) {
         buffer.push(characters.consume());
         for (const ch of characters) {
             if (!isNumber(ch)) {
+                characters.back();
                 break;
             } else {
                 buffer.push(ch);
