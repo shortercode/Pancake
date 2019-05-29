@@ -259,6 +259,7 @@ function token (type, position, value, isNewline = false) {
 
 function* lexTemplateliteral(characters, buffer) {
     let position = characters.position();
+    let isFirst = true;
     characters.next(); // consume backtick
 
     for (const ch of characters) {
@@ -271,10 +272,12 @@ function* lexTemplateliteral(characters, buffer) {
             const string = buffer.consume();
 
             yield token(
-                "templateliteral",
+                isFirst ? "templateliteralstart": "templateliteralchunk",
                 position,
                 string
             );
+            
+            isFirst = false;
 
             yield* lexer(characters, buffer, true);
 
@@ -285,7 +288,7 @@ function* lexTemplateliteral(characters, buffer) {
             const string = buffer.consume();
 
             yield token(
-                "templateliteral",
+                isFirst ? "templateliteralcomplete" : "templateliteralend",
                 position,
                 string
             );
@@ -362,6 +365,7 @@ function lexNumber(characters, buffer) {
         buffer.push(characters.consume());
         for (const ch of characters) {
             if (!isNumber(ch)) {
+                characters.back();
                 break;
             } else {
                 buffer.push(ch);
@@ -814,6 +818,45 @@ class AsyncParselet extends Parselet {
     }
 }
 
+class CompleteTemplateLiteralParselet extends Parselet {
+    parse (tokens) {
+        const token = tokens.consume();
+
+        return {
+            type: "templateliteral",
+            chunks: [ token.value ]
+        };
+    }
+}
+
+class TemplateLiteralParselet extends Parselet {
+    parse (tokens) {
+        const first = tokens.consume();
+        const chunks = [ first.value ];
+
+        while (true) {
+            const expr = parseExpression(tokens, 0);
+            const next = tokens.consume();
+
+            if (next.type === "templateliteralend") {
+                chunks.push(expr, next.value);
+                break;
+            }
+            else if (next.type === "templateliteralchunk") {
+                chunks.push(expr, next.value);
+            }
+            else {
+                throw new Error("Expected continuation of template literal");
+            }
+        } 
+
+        return {
+            type: "templateliteral",
+            chunks
+        };
+    }
+}
+
 class NameParselet extends Parselet {
     parse (tokens) {
         const token = tokens.consume();
@@ -1002,7 +1045,8 @@ register("identifier", new NameParselet);
 register("number", new NumberParselet);
 register("regex", new RegexParselet);
 register("string", new StringParselet);
-// TODO template literal
+register("templateliteralstart", new TemplateLiteralParselet);
+register("templateliteralcomplete", new CompleteTemplateLiteralParselet);
 register("[", new ArrayParselet);
 register("{", new ObjectParselet);
 register("(", new GroupParselet(20));
@@ -1278,7 +1322,7 @@ function endStatement (tokens) {
     if (token.type === "symbol" && token.value === "}") // end of block - all good
         return;
     
-    if (token.newline) // for newline detection
+    if (token.isNewline) // for newline detection
         return;
 
     unexpectedToken(token, ";");
@@ -1296,7 +1340,7 @@ function shouldEndStatement (tokens) {
     if (token.type === "symbol" && token.value === "}") // end of block - all good
         return true;
     
-    if (token.newline) // for newline detection
+    if (token.isNewline) // for newline detection
         return true;
 
     return false;
@@ -1346,7 +1390,7 @@ function parseBlock (tokens) {
 
     ensure(tokens, "{");
 
-    while (!tokens.done()) {
+    while (true) {
         if (match(tokens, "}"))
             break;
         statements.push(parseStatement(tokens));
@@ -1454,13 +1498,14 @@ function parseEmptyStatement (tokens) {
 
 function parseFlow (tokens) {
     const type = getIdentifier(tokens);
-    const next = tokens.consume();
+    const next = tokens.peek();
     let label = null;
 
-    if (!next) unexpectedEnd();
-
-    if (next.isNewline == false && next.type == "identifier")
+    if (next.type == "identifier")
+    {
         label = next.value;
+        tokens.consume();
+    }
     
     endStatement(tokens);
 
@@ -1617,15 +1662,68 @@ function parseWhileLoop (tokens) {
     conditional.condition = parseExpression(tokens, 0);
     ensure(tokens, ")");
 
-    if (match(tokens, "{")) {
-        tokens.back();
-        conditional.thenStatement = parseBlock(tokens);
-    }
-    else {
-        conditional.thenStatement = parseExpressionStatement(tokens);
-    }
+    conditional.thenStatement = parseStatement(tokens);
 
     return conditional;
+}
+
+function parseSwitchStatement (tokens) {
+
+    // wow the classic c style switch statement is a mess...
+
+    ensure(tokens, "switch", "identifier");
+    ensure(tokens, "(");
+    const test = parseExpression(tokens, 0);
+    const cases = [];
+    ensure(tokens, ")");
+    ensure(tokens, "{");
+    
+    while (!tokens.done()) {
+        let test = null;
+        let consequents = [];
+
+        if (match(tokens, "}")) {
+            break;
+        }
+        else if (match(tokens, "case", "identifier")) {
+            test = parseExpression(tokens, 0);
+            ensure(tokens, ":");
+        }
+        else if (match(tokens, "default", "identifier")) {
+            ensure(tokens, ":");
+        }
+        else {
+            throw new Error("Expected case");
+        }
+
+        while (!tokens.done()) {
+            const isEnd = match(tokens, "}");
+            const isCaseNext = match(tokens, "case", "identifier");
+            const isDefaultNext = match(tokens, "default", "identifier");
+
+            if (isEnd) {
+                break;
+            }
+            else if (isCaseNext || isDefaultNext) {
+                tokens.back();
+                break;
+            }
+
+            const consequent = parseStatement(tokens);
+            consequents.push(consequent);
+        }
+
+        cases.push({
+            test,
+            consequents
+        });
+    }
+
+    return {
+        type: "switch",
+        test,
+        cases
+    };
 }
 
 function register$2 (value, fn) {
@@ -1657,7 +1755,7 @@ register$2("async", parseAsync);
 register$2("for", parseForLoop);
 register$2("class", parseClass);
 
-register$2("switch", notImplemented);
+register$2("switch", parseSwitchStatement);
 
 register$2("import", notImplemented);
 register$2("export", notImplemented);
@@ -1690,6 +1788,9 @@ function parseLabelStatement (tokens) {
 function parseStatement (tokens) {
     const current = tokens.peek();
     const next = tokens.peekNext();
+
+    if (!current)
+        unexpectedEnd();
 
     if (current.type === "identifier" && next && next.value === ":")
         return parseLabelStatement(tokens);
