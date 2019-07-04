@@ -12,16 +12,26 @@ function getInfix(tokens) {
     if (!token)
         return null;
 
-    if (token.type === "symbol")
-        return infixParselets.get(token.value);
+    const isNewline = token.isNewline;
+    let parselet;
 
-    if (token.type === "identifier") {
-        const parselet = identifierInfixParselets.get(token.value);
-        if (parselet)
-            return parselet;
+    if (token.type === "symbol")
+        parselet = infixParselets.get(token.value);
+
+    else if (token.type === "identifier") {
+        parselet = identifierInfixParselets.get(token.value);
     }
 
-    return infixParselets.get(token.type);
+    if (!parselet)
+        parselet = infixParselets.get(token.type);
+
+    if (parselet)
+    {
+        if (token.isNewline && parselet.allowLinebreak === false)
+            return null;
+        return parselet;
+    }
+    return null;
 }
 
 function getPrefix(tokens) {

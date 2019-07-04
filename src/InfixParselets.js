@@ -34,6 +34,10 @@ class BinaryOperatorParselet extends Parselet {
 }
 
 class PostfixOperatorParselet extends Parselet {
+    constructor (precedence) {
+        super(precedence);
+        this.allowLinebreak = false;
+    }
     parse (tokens, left) {
         return {
             type: "postfix",
